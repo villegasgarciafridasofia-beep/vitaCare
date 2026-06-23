@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-
+import 'views/auth/auth_wrapper.dart';
 import 'firebase_options.dart';
 import 'routes/app_routes.dart';
 
@@ -22,7 +22,7 @@ class VitaCareApp extends StatelessWidget {
     return MaterialApp(
       title: 'VitaCare AI',
       debugShowCheckedModeBanner: false,
-      initialRoute: AppRoutes.login,
+      home: AuthWrapper(),
       routes: AppRoutes.routes,
     );
   }
