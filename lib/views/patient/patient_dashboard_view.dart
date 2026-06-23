@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../medications/add_medication_view.dart';
 import 'my_caregivers_view.dart';
-
+import '../medications/medications_view.dart';
 class PatientDashboardView extends StatelessWidget {
   const PatientDashboardView({super.key});
 
@@ -63,12 +63,11 @@ class PatientDashboardView extends StatelessWidget {
                   context,
                   MaterialPageRoute(
                     builder: (_) =>
-                    const AddMedicationView(),
+                    const MedicationsView(),
                   ),
                 );
               },
             ),
-
             DashboardCard(
               icon: Icons.calendar_month,
               title: 'Citas médicas',
