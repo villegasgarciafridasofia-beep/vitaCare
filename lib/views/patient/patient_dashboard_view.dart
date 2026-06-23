@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../linking/generate_qr_view.dart';
+import '../medications/add_medication_view.dart';
 import 'my_caregivers_view.dart';
+
 class PatientDashboardView extends StatelessWidget {
   const PatientDashboardView({super.key});
 
@@ -42,7 +43,10 @@ class PatientDashboardView extends StatelessWidget {
                   SizedBox(height: 8),
                   Text(
                     'Estado actual: Verde 🟢',
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                    ),
                   ),
                 ],
               ),
@@ -54,42 +58,52 @@ class PatientDashboardView extends StatelessWidget {
               icon: Icons.medication,
               title: 'Medicamentos',
               subtitle: 'Gestiona tratamientos y recordatorios',
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                    const AddMedicationView(),
+                  ),
+                );
+              },
             ),
+
             DashboardCard(
               icon: Icons.calendar_month,
               title: 'Citas médicas',
               subtitle: 'Consulta próximas citas',
               onTap: () {},
             ),
+
             DashboardCard(
               icon: Icons.location_on,
               title: 'Ubicación',
               subtitle: 'Monitoreo y zonas seguras',
               onTap: () {},
             ),
-      DashboardCard(
-        icon: Icons.family_restroom,
-        title: 'Familiares',
-        subtitle: 'Cuidadores vinculados por QR',
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const MyCaregiversView(),
-            ),
-          );
-        },
-      ),
+
+            DashboardCard(
+              icon: Icons.family_restroom,
+              title: 'Familiares',
+              subtitle: 'Ver cuidadores vinculados',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const MyCaregiversView(),
+                  ),
                 );
               },
             ),
+
             DashboardCard(
               icon: Icons.sos,
               title: 'SOS',
               subtitle: 'Enviar alerta de emergencia',
               onTap: () {},
             ),
+
             DashboardCard(
               icon: Icons.smart_toy,
               title: 'VitaCare AI',
@@ -125,14 +139,22 @@ class DashboardCard extends StatelessWidget {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: Colors.teal.shade100,
-          child: Icon(icon, color: Colors.teal),
+          child: Icon(
+            icon,
+            color: Colors.teal,
+          ),
         ),
         title: Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
         ),
         subtitle: Text(subtitle),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        trailing: const Icon(
+          Icons.arrow_forward_ios,
+          size: 16,
+        ),
         onTap: onTap,
       ),
     );
