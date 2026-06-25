@@ -9,107 +9,77 @@ class MedicationsView extends StatefulWidget {
   const MedicationsView({super.key});
 
   @override
-  State<MedicationsView> createState() =>
-      _MedicationsViewState();
+  State<MedicationsView> createState() => _MedicationsViewState();
 }
 
-class _MedicationsViewState
-    extends State<MedicationsView> {
+class _MedicationsViewState extends State<MedicationsView> {
+  final MedicationService medicationService = MedicationService();
 
-  final MedicationService medicationService =
-  MedicationService();
-
-  Future<List<MedicationModel>>
-  loadMedications() async {
-
-    final uid =
-        FirebaseAuth.instance.currentUser!.uid;
-
-    return medicationService
-        .getPatientMedications(uid);
+  Future<List<MedicationModel>> loadMedications() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    return medicationService.getPatientMedications(uid);
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
+      backgroundColor: const Color(0xFFF4F8FB),
       appBar: AppBar(
         title: const Text('Medicamentos'),
         backgroundColor: Colors.teal,
       ),
-
-      floatingActionButton:
-      FloatingActionButton(
+      floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.teal,
         child: const Icon(Icons.add),
         onPressed: () async {
-
           await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) =>
-              const AddMedicationView(),
+              builder: (_) => const AddMedicationView(),
             ),
           );
-
           setState(() {});
         },
       ),
-
-      body: FutureBuilder<
-          List<MedicationModel>>(
+      body: FutureBuilder<List<MedicationModel>>(
         future: loadMedications(),
-
         builder: (context, snapshot) {
-
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-
-            return const Center(
-              child:
-              CircularProgressIndicator(),
-            );
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
           }
 
-          final medications =
-              snapshot.data ?? [];
+          final medications = snapshot.data ?? [];
 
           if (medications.isEmpty) {
-
-            return const Center(
-              child: Text(
-                'No hay medicamentos',
-              ),
-            );
+            return const Center(child: Text('No hay medicamentos'));
           }
 
           return ListView.builder(
-            itemCount:
-            medications.length,
-
-            itemBuilder:
-                (context, index) {
-
-              final med =
-              medications[index];
+            itemCount: medications.length,
+            itemBuilder: (context, index) {
+              final med = medications[index];
 
               return Card(
-                margin:
-                const EdgeInsets.all(
-                    10),
-
+                margin: const EdgeInsets.all(10),
+                elevation: 3,
                 child: ListTile(
-                  leading: const Icon(
-                    Icons.medication,
-                    color: Colors.teal,
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.teal.shade100,
+                    child: const Icon(Icons.medication, color: Colors.teal),
                   ),
-
-                  title:
-                  Text(med.name),
-
+                  title: Text(
+                    med.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
                   subtitle: Text(
-                    '${med.dose}\n${med.frequency}\n${med.times.join(", ")}',
+                    '${med.doseQuantity} ${med.doseUnit} • ${med.medicineForm}\n'
+                        '${med.frequency}\n'
+                        'Horarios: ${med.times.join(", ")}\n'
+                        'Prioridad: ${med.priority}',
                   ),
+                  trailing: med.isControlled
+                      ? const Icon(Icons.warning, color: Colors.red)
+                      : const Icon(Icons.arrow_forward_ios, size: 16),
                 ),
               );
             },
