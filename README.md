@@ -121,5 +121,5 @@ El proyecto permitió fortalecer conocimientos en desarrollo móvil con Xamarin.
 
 # Estado del Proyecto
 
-**Proyecto Finalizado.**
+**Proyecto en curso.**
 ```
