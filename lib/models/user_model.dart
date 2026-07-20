@@ -29,6 +29,17 @@ class UserModel {
 
   final DateTime createdAt;
 
+  // Configuración de rutina
+  final String wakeUpTime;
+  final String breakfastTime;
+  final String lunchTime;
+  final String dinnerTime;
+  final String sleepTime;
+
+  final bool allowNightReminders;
+  final int reminderMinutesBefore;
+  final bool isRoutineConfigured;
+
   UserModel({
     required this.uid,
     required this.email,
@@ -50,6 +61,16 @@ class UserModel {
     required this.caregivers,
     required this.patients,
     required this.createdAt,
+
+    // Valores por defecto
+    this.wakeUpTime = '',
+    this.breakfastTime = '',
+    this.lunchTime = '',
+    this.dinnerTime = '',
+    this.sleepTime = '',
+    this.allowNightReminders = false,
+    this.reminderMinutesBefore = 10,
+    this.isRoutineConfigured = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -74,6 +95,16 @@ class UserModel {
       'caregivers': caregivers,
       'patients': patients,
       'createdAt': createdAt.toIso8601String(),
+
+      // Rutina
+      'wakeUpTime': wakeUpTime,
+      'breakfastTime': breakfastTime,
+      'lunchTime': lunchTime,
+      'dinnerTime': dinnerTime,
+      'sleepTime': sleepTime,
+      'allowNightReminders': allowNightReminders,
+      'reminderMinutesBefore': reminderMinutesBefore,
+      'isRoutineConfigured': isRoutineConfigured,
     };
   }
 
@@ -84,7 +115,9 @@ class UserModel {
       name: map['name'] ?? '',
       paternalLastName: map['paternalLastName'] ?? '',
       maternalLastName: map['maternalLastName'] ?? '',
-      birthDate: DateTime.parse(map['birthDate']),
+      birthDate: map['birthDate'] != null
+          ? DateTime.parse(map['birthDate'])
+          : DateTime.now(),
       phoneNumber: map['phoneNumber'] ?? '',
       emergencyContact: map['emergencyContact'] ?? '',
       hasDisease: map['hasDisease'] ?? false,
@@ -98,7 +131,19 @@ class UserModel {
       linkCode: map['linkCode'],
       caregivers: List<String>.from(map['caregivers'] ?? []),
       patients: List<String>.from(map['patients'] ?? []),
-      createdAt: DateTime.parse(map['createdAt']),
+      createdAt: map['createdAt'] != null
+          ? DateTime.parse(map['createdAt'])
+          : DateTime.now(),
+
+      // Rutina
+      wakeUpTime: map['wakeUpTime'] ?? '',
+      breakfastTime: map['breakfastTime'] ?? '',
+      lunchTime: map['lunchTime'] ?? '',
+      dinnerTime: map['dinnerTime'] ?? '',
+      sleepTime: map['sleepTime'] ?? '',
+      allowNightReminders: map['allowNightReminders'] ?? false,
+      reminderMinutesBefore: map['reminderMinutesBefore'] ?? 10,
+      isRoutineConfigured: map['isRoutineConfigured'] ?? false,
     );
   }
 }
