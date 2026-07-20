@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'views/auth/auth_wrapper.dart';
+
 import 'firebase_options.dart';
 import 'routes/app_routes.dart';
+import 'views/auth/auth_wrapper.dart';
+import 'core/theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,7 +15,7 @@ void main() async {
 
   runApp(const VitaCareApp());
 }
-//login
+
 class VitaCareApp extends StatelessWidget {
   const VitaCareApp({super.key});
 
@@ -22,7 +24,8 @@ class VitaCareApp extends StatelessWidget {
     return MaterialApp(
       title: 'VitaCare AI',
       debugShowCheckedModeBanner: false,
-      home: AuthWrapper(),
+      theme: AppTheme.lightTheme,
+      home:  AuthWrapper(),
       routes: AppRoutes.routes,
     );
   }
