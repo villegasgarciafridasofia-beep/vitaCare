@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
+import '../../services/medication_registration_service.dart';
 import '../../models/medication_model.dart';
 import '../../models/user_model.dart';
 import '../../services/firestore_service.dart';
@@ -455,8 +455,8 @@ setState(() {
 isLoading = true;
 });
 
-await medicationService.addMedication(
-medication,
+await MedicationRegistrationService().registerMedication(
+  medication: medication,
 );
 
 if (!mounted) return;

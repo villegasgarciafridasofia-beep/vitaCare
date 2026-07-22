@@ -34,9 +34,6 @@ class MedicationService {
         doc.data(),
       ),
     )
-        .where(
-          (medication) => medication.active,
-    )
         .toList();
 
     medications.sort(
