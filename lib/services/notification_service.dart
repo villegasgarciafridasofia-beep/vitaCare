@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -6,9 +7,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
-import '../models/alarm_payload.dart';
-import './AlarmService/alarm_receiver.dart';
-
+import '../../models/alarm_payload.dart';
 
 class NotificationService {
   NotificationService._();
@@ -17,78 +16,89 @@ class NotificationService {
   NotificationService._();
 
   final FlutterLocalNotificationsPlugin
-  _notificationsPlugin =
+  flutterLocalNotificationsPlugin =
   FlutterLocalNotificationsPlugin();
 
-  /*
-   * Se inicializa con UTC para evitar:
-   *
-   * LateInitializationError:
-   * Field '_local' has not been initialized.
-   *
-   * Después se reemplaza por la zona horaria real
-   * del dispositivo.
-   */
   tz.Location _local = tz.UTC;
 
-  bool _isInitialized = false;
+  bool _initialized = false;
 
-  static const String _channelId =
-      'vitacare_medication_channel';
+  static const String medicationChannelId =
+      'medication_channel';
 
-  static const String _channelName =
+  static const String medicationChannelName =
       'Recordatorios de medicamentos';
 
-  static const String _channelDescription =
-      'Notificaciones y alarmas para recordar la toma de medicamentos.';
+  static const String medicationChannelDescription =
+      'Alertas para recordar la toma de medicamentos';
 
+  /// Inicializa el servicio de notificaciones.
   Future<void> initialize() async {
-    if (_isInitialized) {
+    if (_initialized) {
+      debugPrint(
+        'NotificationService ya estaba inicializado.',
+      );
       return;
     }
 
-    await _initializeTimezone();
+    try {
+      await _configureTimezone();
 
-    const AndroidInitializationSettings
-    androidInitializationSettings =
-    AndroidInitializationSettings(
-      '@mipmap/ic_launcher',
-    );
+      const AndroidInitializationSettings androidSettings =
+      AndroidInitializationSettings(
+        '@mipmap/ic_launcher',
+      );
 
-    const DarwinInitializationSettings
-    iosInitializationSettings =
-    DarwinInitializationSettings(
-      requestAlertPermission: false,
-      requestBadgePermission: false,
-      requestSoundPermission: false,
-    );
+      const DarwinInitializationSettings iosSettings =
+      DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
 
-    const InitializationSettings initializationSettings =
-    InitializationSettings(
-      android: androidInitializationSettings,
-      iOS: iosInitializationSettings,
-    );
+      const InitializationSettings initializationSettings =
+      InitializationSettings(
+        android: androidSettings,
+        iOS: iosSettings,
+      );
 
-    await _notificationsPlugin.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse:
-      _onNotificationResponse,
-    );
+      final bool? initialized =
+      await flutterLocalNotificationsPlugin.initialize(
+        initializationSettings,
+        onDidReceiveNotificationResponse:
+        _onNotificationResponse,
+        onDidReceiveBackgroundNotificationResponse:
+        notificationTapBackground,
+      );
 
-    await _createNotificationChannel();
-    await requestPermissions();
+      debugPrint(
+        'Plugin de notificaciones inicializado: '
+            '$initialized',
+      );
 
-    _isInitialized = true;
+      await _createAndroidNotificationChannel();
+      await requestPermissions();
 
-    debugPrint(
-      'NotificationService inicializado correctamente.',
-    );
+      _initialized = true;
+
+      debugPrint(
+        'NotificationService inicializado correctamente.',
+      );
+    } catch (error, stackTrace) {
+      debugPrint(
+        'Error inicializando NotificationService: $error',
+      );
+
+      debugPrintStack(
+        stackTrace: stackTrace,
+      );
+
+      rethrow;
+    }
   }
 
-  Future<void> _initializeTimezone() async {
-    /*
-     * Carga la base de datos de zonas horarias.
-     */
+  /// Configura la zona horaria del teléfono.
+  Future<void> _configureTimezone() async {
     tz.initializeTimeZones();
 
     try {
@@ -105,23 +115,19 @@ class NotificationService {
       tz.setLocalLocation(_local);
 
       debugPrint(
-        'Zona horaria configurada: $timezoneIdentifier',
+        'Zona horaria configurada: '
+            '$timezoneIdentifier',
       );
-    } catch (error, stackTrace) {
-      /*
-       * Si el dispositivo devuelve una zona horaria
-       * desconocida, usamos UTC para evitar que la
-       * aplicación se cierre.
-       */
+    } catch (error) {
       _local = tz.UTC;
-      tz.setLocalLocation(_local);
+
+      tz.setLocalLocation(
+        tz.UTC,
+      );
 
       debugPrint(
-        'No se pudo obtener la zona horaria local: $error',
-      );
-
-      debugPrintStack(
-        stackTrace: stackTrace,
+        'No fue posible detectar la zona horaria: '
+            '$error',
       );
 
       debugPrint(
@@ -130,92 +136,117 @@ class NotificationService {
     }
   }
 
-  Future<void> _createNotificationChannel() async {
+  /// Crea el canal de recordatorios en Android.
+  Future<void> _createAndroidNotificationChannel() async {
+    if (kIsWeb) {
+      return;
+    }
+
+    final AndroidFlutterLocalNotificationsPlugin?
+    androidPlugin =
+    flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin>();
+
+    if (androidPlugin == null) {
+      debugPrint(
+        'No se encontró el plugin de Android.',
+      );
+      return;
+    }
+
     const AndroidNotificationChannel channel =
     AndroidNotificationChannel(
-      _channelId,
-      _channelName,
-      description: _channelDescription,
+      medicationChannelId,
+      medicationChannelName,
+      description: medicationChannelDescription,
       importance: Importance.max,
       playSound: true,
       enableVibration: true,
+      showBadge: true,
     );
 
-    final AndroidFlutterLocalNotificationsPlugin?
-    androidPlugin =
-    _notificationsPlugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
-
-    await androidPlugin?.createNotificationChannel(
+    await androidPlugin.createNotificationChannel(
       channel,
     );
+
+    debugPrint(
+      'Canal de notificaciones creado correctamente.',
+    );
   }
 
+  /// Solicita los permisos necesarios en Android.
   Future<void> requestPermissions() async {
+    if (kIsWeb ||
+        defaultTargetPlatform != TargetPlatform.android) {
+      return;
+    }
+
     final AndroidFlutterLocalNotificationsPlugin?
     androidPlugin =
-    _notificationsPlugin.resolvePlatformSpecificImplementation<
+    flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
 
-    await androidPlugin?.requestNotificationsPermission();
+    if (androidPlugin == null) {
+      debugPrint(
+        'No se encontró la implementación de Android.',
+      );
+      return;
+    }
 
-    /*
-     * Necesario para alarmas exactas en versiones
-     * recientes de Android.
-     */
+    final bool? notificationsGranted =
+    await androidPlugin
+        .requestNotificationsPermission();
+
+    debugPrint(
+      'Permiso de notificaciones: '
+          '$notificationsGranted',
+    );
+
     try {
-      await androidPlugin?.requestExactAlarmsPermission();
+      final bool? exactAlarmsGranted =
+      await androidPlugin
+          .requestExactAlarmsPermission();
+
+      debugPrint(
+        'Permiso de alarmas exactas: '
+            '$exactAlarmsGranted',
+      );
     } catch (error) {
       debugPrint(
-        'No se pudo solicitar permiso de alarmas exactas: $error',
+        'No se pudo solicitar el permiso de '
+            'alarmas exactas: $error',
       );
     }
-
-    final IOSFlutterLocalNotificationsPlugin?
-    iosPlugin =
-    _notificationsPlugin.resolvePlatformSpecificImplementation<
-        IOSFlutterLocalNotificationsPlugin>();
-
-    await iosPlugin?.requestPermissions(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
   }
 
-  Future<void> scheduleMedicationNotification({
-    required AlarmPayload payload,
-  }) async {
+  /// Muestra una notificación inmediata de prueba.
+  Future<void> showTestNotification() async {
     await _ensureInitialized();
-
-    final DateTime now = DateTime.now();
-
-    if (!payload.scheduledDateTime.isAfter(now)) {
-      throw ArgumentError(
-        'La fecha de la notificación debe ser posterior a la fecha actual.',
-      );
-    }
-
-    final tz.TZDateTime scheduledDate =
-    tz.TZDateTime.from(
-      payload.scheduledDateTime,
-      _local,
-    );
 
     const AndroidNotificationDetails androidDetails =
     AndroidNotificationDetails(
-      _channelId,
-      _channelName,
-      channelDescription: _channelDescription,
+      medicationChannelId,
+      medicationChannelName,
+      channelDescription:
+      medicationChannelDescription,
       importance: Importance.max,
       priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
       category: AndroidNotificationCategory.alarm,
       visibility: NotificationVisibility.public,
       fullScreenIntent: true,
-      ongoing: false,
+
+      // Se quita al tocarla.
       autoCancel: true,
-      playSound: true,
-      enableVibration: true,
+
+      // No permanece fija en el panel.
+      ongoing: false,
+
+      ticker:
+      'Prueba de notificación de VitaCare AI',
     );
 
     const DarwinNotificationDetails iosDetails =
@@ -225,28 +256,125 @@ class NotificationService {
       presentSound: true,
     );
 
-    const NotificationDetails notificationDetails =
+    const NotificationDetails details =
     NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
     );
 
-    final String notificationBody =
-    _buildNotificationBody(
-      payload,
+    await flutterLocalNotificationsPlugin.show(
+      999,
+      'Prueba de VitaCare AI',
+      'Las notificaciones funcionan correctamente',
+      details,
+      payload: jsonEncode(
+        <String, dynamic>{
+          'type': 'test',
+        },
+      ),
     );
 
-    await _notificationsPlugin.zonedSchedule(
+    debugPrint(
+      'Notificación inmediata enviada.',
+    );
+  }
+
+  /// Programa una notificación de medicamento.
+  Future<void> scheduleMedicationNotification({
+    required AlarmPayload payload,
+  }) async {
+    await _ensureInitialized();
+
+    final tz.TZDateTime scheduledDate =
+    _convertToLocalTimezone(
+      payload.scheduledDateTime,
+    );
+
+    final tz.TZDateTime now =
+    tz.TZDateTime.now(_local);
+
+    final Duration difference =
+    scheduledDate.difference(now);
+
+    debugPrint(
+      'Fecha actual: $now',
+    );
+
+    debugPrint(
+      'Fecha programada: $scheduledDate',
+    );
+
+    debugPrint(
+      'Segundos restantes: '
+          '${difference.inSeconds}',
+    );
+
+    if (!scheduledDate.isAfter(now)) {
+      throw ArgumentError(
+        'La fecha programada debe ser posterior '
+            'a la fecha actual.',
+      );
+    }
+
+    if (difference.inSeconds < 10) {
+      throw ArgumentError(
+        'El recordatorio debe programarse al menos '
+            '10 segundos después de la hora actual.',
+      );
+    }
+
+    final String notificationPayload =
+    jsonEncode(
+      payload.toJson(),
+    );
+
+    final AndroidNotificationDetails androidDetails =
+    AndroidNotificationDetails(
+      medicationChannelId,
+      medicationChannelName,
+      channelDescription:
+      medicationChannelDescription,
+      importance: Importance.max,
+      priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
+      category: AndroidNotificationCategory.alarm,
+      visibility: NotificationVisibility.public,
+      fullScreenIntent: true,
+
+      // Desaparece cuando el usuario la toca.
+      autoCancel: true,
+
+      // Permite retirarla del panel.
+      ongoing: false,
+
+      ticker:
+      'Es hora de tomar ${payload.medicationName}',
+    );
+
+    const DarwinNotificationDetails iosDetails =
+    DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    final NotificationDetails notificationDetails =
+    NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
       payload.notificationId,
-      'Hora de tomar ${payload.medicationName}',
-      notificationBody,
+      'Hora de tomar tu medicamento',
+      '${payload.medicationName} - '
+          '${payload.dose}',
       scheduledDate,
       notificationDetails,
       androidScheduleMode:
       AndroidScheduleMode.exactAllowWhileIdle,
-      payload: jsonEncode(
-        payload.toMap(),
-      ),
+      payload: notificationPayload,
     );
 
     debugPrint(
@@ -254,138 +382,134 @@ class NotificationService {
     );
 
     debugPrint(
-      'Medicamento: ${payload.medicationName}',
+      'Notification ID: '
+          '${payload.notificationId}',
     );
 
     debugPrint(
-      'Fecha: ${payload.scheduledDateTime}',
+      'Medicamento: '
+          '${payload.medicationName}',
     );
 
     debugPrint(
-      'Notification ID: ${payload.notificationId}',
+      'Hora programada: $scheduledDate',
     );
   }
 
-  Future<void> showInstantNotification({
-    required AlarmPayload payload,
-  }) async {
-    await _ensureInitialized();
-
-    const AndroidNotificationDetails androidDetails =
-    AndroidNotificationDetails(
-      _channelId,
-      _channelName,
-      channelDescription: _channelDescription,
-      importance: Importance.max,
-      priority: Priority.high,
-      category: AndroidNotificationCategory.alarm,
-      visibility: NotificationVisibility.public,
-      fullScreenIntent: true,
-      playSound: true,
-      enableVibration: true,
-    );
-
-    const DarwinNotificationDetails iosDetails =
-    DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
-
-    const NotificationDetails notificationDetails =
-    NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
-
-    await _notificationsPlugin.show(
-      payload.notificationId,
-      'Hora de tomar ${payload.medicationName}',
-      _buildNotificationBody(payload),
-      notificationDetails,
-      payload: jsonEncode(
-        payload.toMap(),
-      ),
-    );
-  }
-
+  /// Cancela una notificación por su ID.
   Future<void> cancelNotification(
       int notificationId,
       ) async {
-    await _ensureInitialized();
-
-    await _notificationsPlugin.cancel(
+    await flutterLocalNotificationsPlugin.cancel(
       notificationId,
     );
 
     debugPrint(
-      'Notificación cancelada: $notificationId',
+      'Notificación cancelada: '
+          '$notificationId',
     );
   }
 
+  /// Cancela todas las notificaciones.
   Future<void> cancelAllNotifications() async {
-    await _ensureInitialized();
-
-    await _notificationsPlugin.cancelAll();
+    await flutterLocalNotificationsPlugin
+        .cancelAll();
 
     debugPrint(
       'Todas las notificaciones fueron canceladas.',
     );
   }
 
+  /// Obtiene las notificaciones programadas.
   Future<List<PendingNotificationRequest>>
   getPendingNotifications() async {
-    await _ensureInitialized();
-
-    return _notificationsPlugin
+    return flutterLocalNotificationsPlugin
         .pendingNotificationRequests();
   }
 
-  String _buildNotificationBody(
-      AlarmPayload payload,
+  /// Convierte una fecha normal a la zona horaria
+  /// configurada en el dispositivo.
+  tz.TZDateTime _convertToLocalTimezone(
+      DateTime dateTime,
       ) {
-    final List<String> information = [];
-
-    if (payload.dose.trim().isNotEmpty) {
-      information.add(
-        'Dosis: ${payload.dose.trim()}',
+    if (dateTime.isUtc) {
+      return tz.TZDateTime.from(
+        dateTime,
+        _local,
       );
     }
 
-    if (payload.instructions.trim().isNotEmpty) {
-      information.add(
-        payload.instructions.trim(),
-      );
-    }
-
-    if (information.isEmpty) {
-      return 'Toca la notificación para revisar tu medicamento.';
-    }
-
-    return information.join(' · ');
-  }
-
-  void _onNotificationResponse(
-      NotificationResponse response,
-      ) {
-    final String? payload = response.payload;
-
-    if (payload == null || payload.trim().isEmpty) {
-      debugPrint(
-        'La notificación no contiene información.',
-      );
-
-      return;
-    }
-
-    AlarmReceiver.instance.handlePayload(
-      payload,
+    return tz.TZDateTime(
+      _local,
+      dateTime.year,
+      dateTime.month,
+      dateTime.day,
+      dateTime.hour,
+      dateTime.minute,
+      dateTime.second,
     );
   }
 
+  /// Verifica que el servicio esté inicializado.
   Future<void> _ensureInitialized() async {
-    if (!_isInitialized) {
+    if (!_initialized) {
       await initialize();
     }
   }
+
+  /// Se ejecuta cuando el usuario toca una notificación
+  /// con la aplicación abierta o en segundo plano.
+  static void _onNotificationResponse(
+      NotificationResponse response,
+      ) {
+    debugPrint(
+      'Notificación presionada.',
+    );
+
+    debugPrint(
+      'ID de notificación: ${response.id}',
+    );
+
+    debugPrint(
+      'Payload: ${response.payload}',
+    );
+
+    final int? notificationId = response.id;
+
+    if (notificationId != null) {
+      unawaited(
+        NotificationService.instance
+            .cancelNotification(notificationId),
+      );
+    }
+
+    /*
+      Aquí puedes enviar el payload a AlarmReceiver
+      para abrir MedicationAlarmView.
+
+      Por ahora, la notificación se elimina correctamente
+      del panel cuando el usuario la toca.
+    */
+  }
+}
+
+/// Esta función debe estar fuera de la clase.
+///
+/// Se ejecuta cuando el usuario toca una notificación
+/// mientras la aplicación está cerrada o en segundo plano.
+@pragma('vm:entry-point')
+void notificationTapBackground(
+    NotificationResponse response,
+    ) {
+  debugPrint(
+    'Notificación presionada en segundo plano.',
+  );
+
+  debugPrint(
+    'ID de notificación: ${response.id}',
+  );
+
+  debugPrint(
+    'Payload: ${response.payload}',
+  );
 }

@@ -21,7 +21,7 @@ class AlarmPayload {
     required this.scheduledDateTime,
   });
 
-  Map<String, dynamic> toMap() {
+  Map<String, dynamic> toJson() {
     return {
       'notificationId': notificationId,
       'medicationId': medicationId,
@@ -35,19 +35,35 @@ class AlarmPayload {
     };
   }
 
-  factory AlarmPayload.fromMap(Map<String, dynamic> map) {
+  Map<String, dynamic> toMap() {
+    return toJson();
+  }
+
+  factory AlarmPayload.fromJson(Map<String, dynamic> json) {
     return AlarmPayload(
-      notificationId: map['notificationId'] as int,
-      medicationId: map['medicationId'] as String,
-      medicationLogId: map['medicationLogId'] as String,
-      patientUid: map['patientUid'] as String,
-      medicationName: map['medicationName'] as String,
-      dose: map['dose'] as String,
-      instructions: map['instructions'] as String,
-      scheduledTime: map['scheduledTime'] as String,
+      notificationId: _parseInt(json['notificationId']),
+      medicationId: json['medicationId']?.toString() ?? '',
+      medicationLogId: json['medicationLogId']?.toString() ?? '',
+      patientUid: json['patientUid']?.toString() ?? '',
+      medicationName: json['medicationName']?.toString() ?? '',
+      dose: json['dose']?.toString() ?? '',
+      instructions: json['instructions']?.toString() ?? '',
+      scheduledTime: json['scheduledTime']?.toString() ?? '',
       scheduledDateTime: DateTime.parse(
-        map['scheduledDateTime'] as String,
+        json['scheduledDateTime'].toString(),
       ),
     );
+  }
+
+  factory AlarmPayload.fromMap(Map<String, dynamic> map) {
+    return AlarmPayload.fromJson(map);
+  }
+
+  static int _parseInt(dynamic value) {
+    if (value is int) {
+      return value;
+    }
+
+    return int.tryParse(value.toString()) ?? 0;
   }
 }

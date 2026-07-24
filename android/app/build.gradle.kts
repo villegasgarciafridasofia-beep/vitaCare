@@ -1,9 +1,7 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    // START: FlutterFire Configuration
     id("com.google.gms.google-services")
-    // END: FlutterFire Configuration
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -24,7 +22,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.proyectovita"
-        minSdk = flutter.minSdkVersion
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -42,5 +40,7 @@ flutter {
 }
 
 dependencies {
-    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    coreLibraryDesugaring(
+        "com.android.tools:desugar_jdk_libs:2.1.5"
+    )
 }
