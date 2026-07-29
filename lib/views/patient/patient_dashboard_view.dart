@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import '../medications/add_medication_view.dart';
-import 'my_caregivers_view.dart';
+
+import '../../services/notification_service.dart';
 import '../medications/medications_view.dart';
+import 'my_caregivers_view.dart';
+
 class PatientDashboardView extends StatelessWidget {
   const PatientDashboardView({super.key});
 
@@ -14,8 +16,37 @@ class PatientDashboardView extends StatelessWidget {
         backgroundColor: Colors.teal,
         actions: [
           IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications),
+            tooltip: 'Probar alarma',
+            icon: const Icon(Icons.notifications_active, color: Colors.white),
+            onPressed: () async {
+              debugPrint('========== BOTON ==========');
+
+              try {
+                await NotificationService.instance.showTestNotification();
+
+                debugPrint('========== NOTIFICACION ENVIADA ==========');
+
+                if (!context.mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Notificación de prueba enviada'),
+                  ),
+                );
+              } catch (error, stackTrace) {
+                debugPrint('========== ERROR ==========');
+                debugPrint('$error');
+                debugPrintStack(stackTrace: stackTrace);
+
+                if (!context.mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error al enviar la notificación: $error'),
+                  ),
+                );
+              }
+            },
           ),
         ],
       ),
@@ -43,17 +74,12 @@ class PatientDashboardView extends StatelessWidget {
                   SizedBox(height: 8),
                   Text(
                     'Estado actual: Verde 🟢',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                    ),
+                    style: TextStyle(color: Colors.white, fontSize: 16),
                   ),
                 ],
               ),
             ),
-
             const SizedBox(height: 24),
-
             DashboardCard(
               icon: Icons.medication,
               title: 'Medicamentos',
@@ -61,10 +87,7 @@ class PatientDashboardView extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                    const MedicationsView(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const MedicationsView()),
                 );
               },
             ),
@@ -74,14 +97,12 @@ class PatientDashboardView extends StatelessWidget {
               subtitle: 'Consulta próximas citas',
               onTap: () {},
             ),
-
             DashboardCard(
               icon: Icons.location_on,
               title: 'Ubicación',
               subtitle: 'Monitoreo y zonas seguras',
               onTap: () {},
             ),
-
             DashboardCard(
               icon: Icons.family_restroom,
               title: 'Familiares',
@@ -89,20 +110,16 @@ class PatientDashboardView extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const MyCaregiversView(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const MyCaregiversView()),
                 );
               },
             ),
-
             DashboardCard(
               icon: Icons.sos,
               title: 'SOS',
               subtitle: 'Enviar alerta de emergencia',
               onTap: () {},
             ),
-
             DashboardCard(
               icon: Icons.smart_toy,
               title: 'VitaCare AI',
@@ -138,22 +155,11 @@ class DashboardCard extends StatelessWidget {
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: Colors.teal.shade100,
-          child: Icon(
-            icon,
-            color: Colors.teal,
-          ),
+          child: Icon(icon, color: Colors.teal),
         ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle),
-        trailing: const Icon(
-          Icons.arrow_forward_ios,
-          size: 16,
-        ),
+        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: onTap,
       ),
     );

@@ -86,7 +86,7 @@ class MedicationModel {
       isControlled: map['isControlled'] ?? false,
       requiresPrescription: map['requiresPrescription'] ?? false,
       requiresCaregiverSupervision:
-      map['requiresCaregiverSupervision'] ?? false,
+          map['requiresCaregiverSupervision'] ?? false,
       priority: map['priority'] ?? 'Media',
       treatmentReason: map['treatmentReason'] ?? '',
       doctorName: map['doctorName'] ?? '',

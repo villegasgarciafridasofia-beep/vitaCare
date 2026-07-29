@@ -47,27 +47,21 @@ class _CompleteProfileViewState extends State<CompleteProfileView> {
         phoneController.text.trim().isEmpty ||
         emergencyContactController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Completa todos los campos obligatorios"),
-        ),
+        const SnackBar(content: Text("Completa todos los campos obligatorios")),
       );
       return;
     }
 
     if (selectedBirthDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Selecciona tu fecha de nacimiento"),
-        ),
+        const SnackBar(content: Text("Selecciona tu fecha de nacimiento")),
       );
       return;
     }
 
     if (hasDisease && diseaseNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Escribe el nombre de la enfermedad"),
-        ),
+        const SnackBar(content: Text("Escribe el nombre de la enfermedad")),
       );
       return;
     }
@@ -76,9 +70,7 @@ class _CompleteProfileViewState extends State<CompleteProfileView> {
 
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("No hay usuario autenticado"),
-        ),
+        const SnackBar(content: Text("No hay usuario autenticado")),
       );
       return;
     }
@@ -95,8 +87,7 @@ class _CompleteProfileViewState extends State<CompleteProfileView> {
       phoneNumber: phoneController.text.trim(),
       emergencyContact: emergencyContactController.text.trim(),
       hasDisease: hasDisease,
-      diseases:
-      hasDisease ? [diseaseNameController.text.trim()] : <String>[],
+      diseases: hasDisease ? [diseaseNameController.text.trim()] : <String>[],
       role: selectedRole,
       isProfileComplete: true,
       isOlderAdult: isOlderAdult,
@@ -119,22 +110,20 @@ class _CompleteProfileViewState extends State<CompleteProfileView> {
 
       switch (selectedRole) {
         case "caregiver":
-          Navigator.pushReplacementNamed(
-              context, AppRoutes.caregiverDashboard);
+          Navigator.pushReplacementNamed(context, AppRoutes.caregiverDashboard);
           break;
 
         case "both":
         case "patient":
         default:
-          Navigator.pushReplacementNamed(
-              context, AppRoutes.patientDashboard);
+          Navigator.pushReplacementNamed(context, AppRoutes.patientDashboard);
       }
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: ${e.toString()}")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error: ${e.toString()}")));
     } finally {
       if (mounted) {
         setState(() => isLoading = false);
@@ -171,28 +160,20 @@ class _CompleteProfileViewState extends State<CompleteProfileView> {
           children: [
             TextField(
               controller: nameController,
-              decoration: const InputDecoration(
-                labelText: "Nombre",
-              ),
+              decoration: const InputDecoration(labelText: "Nombre"),
             ),
             TextField(
               controller: paternalLastNameController,
-              decoration: const InputDecoration(
-                labelText: "Apellido paterno",
-              ),
+              decoration: const InputDecoration(labelText: "Apellido paterno"),
             ),
             TextField(
               controller: maternalLastNameController,
-              decoration: const InputDecoration(
-                labelText: "Apellido materno",
-              ),
+              decoration: const InputDecoration(labelText: "Apellido materno"),
             ),
             TextField(
               controller: phoneController,
               keyboardType: TextInputType.phone,
-              decoration: const InputDecoration(
-                labelText: "Teléfono",
-              ),
+              decoration: const InputDecoration(labelText: "Teléfono"),
             ),
             TextField(
               controller: emergencyContactController,
@@ -236,22 +217,11 @@ class _CompleteProfileViewState extends State<CompleteProfileView> {
 
             DropdownButtonFormField<String>(
               value: selectedRole,
-              decoration: const InputDecoration(
-                labelText: "Rol",
-              ),
+              decoration: const InputDecoration(labelText: "Rol"),
               items: const [
-                DropdownMenuItem(
-                  value: "patient",
-                  child: Text("Paciente"),
-                ),
-                DropdownMenuItem(
-                  value: "caregiver",
-                  child: Text("Cuidador"),
-                ),
-                DropdownMenuItem(
-                  value: "both",
-                  child: Text("Ambos"),
-                ),
+                DropdownMenuItem(value: "patient", child: Text("Paciente")),
+                DropdownMenuItem(value: "caregiver", child: Text("Cuidador")),
+                DropdownMenuItem(value: "both", child: Text("Ambos")),
               ],
               onChanged: (value) {
                 if (value != null) {
@@ -268,13 +238,13 @@ class _CompleteProfileViewState extends State<CompleteProfileView> {
                 onPressed: isLoading ? null : saveProfile,
                 child: isLoading
                     ? const SizedBox(
-                  width: 22,
-                  height: 22,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
                     : const Text("Guardar perfil"),
               ),
             ),

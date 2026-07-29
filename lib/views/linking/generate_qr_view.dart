@@ -33,10 +33,7 @@ class _GenerateQrViewState extends State<GenerateQrView> {
 
       if (user == null) return;
 
-      final qrJson = jsonEncode({
-        'uid': uid,
-        'code': user.linkCode,
-      });
+      final qrJson = jsonEncode({'uid': uid, 'code': user.linkCode});
 
       setState(() {
         qrData = qrJson;
@@ -60,28 +57,25 @@ class _GenerateQrViewState extends State<GenerateQrView> {
         child: isLoading
             ? const CircularProgressIndicator()
             : Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'Comparte este QR con tu cuidador',
-              style: TextStyle(fontSize: 18),
-            ),
-            const SizedBox(height: 20),
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Comparte este QR con tu cuidador',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                  const SizedBox(height: 20),
 
-            QrImageView(
-              data: qrData,
-              version: QrVersions.auto,
-              size: 280,
-            ),
+                  QrImageView(
+                    data: qrData,
+                    version: QrVersions.auto,
+                    size: 280,
+                  ),
 
-            const SizedBox(height: 20),
+                  const SizedBox(height: 20),
 
-            SelectableText(
-              qrData,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
+                  SelectableText(qrData, textAlign: TextAlign.center),
+                ],
+              ),
       ),
     );
   }

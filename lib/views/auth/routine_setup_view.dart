@@ -33,9 +33,7 @@ class _RoutineSetupViewState extends State<RoutineSetupView> {
     return '$hour:$minute';
   }
 
-  Future<void> pickTime({
-    required Function(TimeOfDay) onSelected,
-  }) async {
+  Future<void> pickTime({required Function(TimeOfDay) onSelected}) async {
     final selected = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
@@ -53,9 +51,7 @@ class _RoutineSetupViewState extends State<RoutineSetupView> {
         dinnerTime == null ||
         sleepTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Completa todos los horarios de rutina'),
-        ),
+        const SnackBar(content: Text('Completa todos los horarios de rutina')),
       );
       return;
     }
@@ -64,9 +60,7 @@ class _RoutineSetupViewState extends State<RoutineSetupView> {
 
     if (currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No hay un usuario autenticado'),
-        ),
+        const SnackBar(content: Text('No hay un usuario autenticado')),
       );
       return;
     }
@@ -93,9 +87,7 @@ class _RoutineSetupViewState extends State<RoutineSetupView> {
 
       if (user == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('No se encontró el perfil del usuario'),
-          ),
+          const SnackBar(content: Text('No se encontró el perfil del usuario')),
         );
         return;
       }
@@ -104,23 +96,21 @@ class _RoutineSetupViewState extends State<RoutineSetupView> {
         Navigator.pushNamedAndRemoveUntil(
           context,
           AppRoutes.caregiverDashboard,
-              (route) => false,
+          (route) => false,
         );
       } else {
         Navigator.pushNamedAndRemoveUntil(
           context,
           AppRoutes.patientDashboard,
-              (route) => false,
+          (route) => false,
         );
       }
     } catch (e) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al guardar la rutina: $e'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al guardar la rutina: $e')));
     } finally {
       if (mounted) {
         setState(() {
@@ -150,19 +140,14 @@ class _RoutineSetupViewState extends State<RoutineSetupView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Rutina diaria'),
-      ),
+      appBar: AppBar(title: const Text('Rutina diaria')),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: ListView(
           children: [
             const Text(
               'Configura tu rutina una sola vez',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             const Text(
@@ -244,22 +229,10 @@ class _RoutineSetupViewState extends State<RoutineSetupView> {
                 border: OutlineInputBorder(),
               ),
               items: const [
-                DropdownMenuItem(
-                  value: 5,
-                  child: Text('5 minutos antes'),
-                ),
-                DropdownMenuItem(
-                  value: 10,
-                  child: Text('10 minutos antes'),
-                ),
-                DropdownMenuItem(
-                  value: 15,
-                  child: Text('15 minutos antes'),
-                ),
-                DropdownMenuItem(
-                  value: 30,
-                  child: Text('30 minutos antes'),
-                ),
+                DropdownMenuItem(value: 5, child: Text('5 minutos antes')),
+                DropdownMenuItem(value: 10, child: Text('10 minutos antes')),
+                DropdownMenuItem(value: 15, child: Text('15 minutos antes')),
+                DropdownMenuItem(value: 30, child: Text('30 minutos antes')),
               ],
               onChanged: (value) {
                 if (value != null) {
@@ -277,9 +250,7 @@ class _RoutineSetupViewState extends State<RoutineSetupView> {
               child: ElevatedButton(
                 onPressed: isLoading ? null : saveRoutine,
                 child: isLoading
-                    ? const CircularProgressIndicator(
-                  color: Colors.white,
-                )
+                    ? const CircularProgressIndicator(color: Colors.white)
                     : const Text('Guardar rutina'),
               ),
             ),

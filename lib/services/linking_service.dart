@@ -7,12 +7,9 @@ class LinkingService {
     required String patientUid,
     required String caregiverUid,
   }) async {
+    final patientRef = _db.collection('users').doc(patientUid);
 
-    final patientRef =
-    _db.collection('users').doc(patientUid);
-
-    final caregiverRef =
-    _db.collection('users').doc(caregiverUid);
+    final caregiverRef = _db.collection('users').doc(caregiverUid);
 
     final patientDoc = await patientRef.get();
 
@@ -20,29 +17,22 @@ class LinkingService {
       throw Exception('Paciente no encontrado');
     }
 
-    final caregivers =
-    List<String>.from(patientDoc['caregivers'] ?? []);
+    final caregivers = List<String>.from(patientDoc['caregivers'] ?? []);
 
     if (caregivers.contains(caregiverUid)) {
       throw Exception('Ya está vinculado');
     }
 
     if (caregivers.length >= 3) {
-      throw Exception(
-        'El paciente ya tiene 3 cuidadores',
-      );
+      throw Exception('El paciente ya tiene 3 cuidadores');
     }
 
     await patientRef.update({
-      'caregivers': FieldValue.arrayUnion([
-        caregiverUid
-      ])
+      'caregivers': FieldValue.arrayUnion([caregiverUid]),
     });
 
     await caregiverRef.update({
-      'patients': FieldValue.arrayUnion([
-        patientUid
-      ])
+      'patients': FieldValue.arrayUnion([patientUid]),
     });
   }
 }

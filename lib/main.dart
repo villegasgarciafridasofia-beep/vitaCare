@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
@@ -12,93 +14,98 @@ import 'views/auth/auth_wrapper.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ---------------------------------------------------------
+  // =========================================================
   // 1. INICIALIZAR FIREBASE
-  // ---------------------------------------------------------
+  // =========================================================
+
   try {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    debugPrint(
-      'Firebase inicializado correctamente.',
-    );
+    debugPrint('Firebase inicializado correctamente.');
   } catch (error, stackTrace) {
-    debugPrint(
-      'ERROR AL INICIALIZAR FIREBASE: $error',
-    );
+    debugPrint('ERROR AL INICIALIZAR FIREBASE: $error');
 
-    debugPrintStack(
-      stackTrace: stackTrace,
-    );
+    debugPrintStack(stackTrace: stackTrace);
   }
 
-  // ---------------------------------------------------------
-  // 2. MOSTRAR LA APLICACIÓN
-  // ---------------------------------------------------------
-  runApp(
-    const VitaCareApp(),
-  );
+  // =========================================================
+  // 2. INICIALIZAR ANDROID ALARM MANAGER
+  // =========================================================
 
-  // ---------------------------------------------------------
-  // 3. INICIALIZAR SERVICIOS DE ANDROID
-  // ---------------------------------------------------------
-  if (!kIsWeb &&
-      defaultTargetPlatform == TargetPlatform.android) {
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
     try {
-      await AndroidAlarmManager.initialize();
+      final bool initialized = await AndroidAlarmManager.initialize();
 
-      debugPrint(
-        'AndroidAlarmManager inicializado correctamente.',
-      );
+      debugPrint('AndroidAlarmManager inicializado: $initialized');
     } catch (error, stackTrace) {
-      debugPrint(
-        'ERROR AL INICIALIZAR ANDROID ALARM MANAGER: '
-            '$error',
-      );
+      debugPrint('ERROR AL INICIALIZAR ANDROID ALARM MANAGER: $error');
 
-      debugPrintStack(
-        stackTrace: stackTrace,
-      );
+      debugPrintStack(stackTrace: stackTrace);
     }
   }
 
-  // ---------------------------------------------------------
-  // 4. INICIALIZAR NOTIFICACIONES
-  // ---------------------------------------------------------
+  // =========================================================
+  // 3. INICIALIZAR NOTIFICACIONES
+  // =========================================================
+
   if (!kIsWeb) {
     try {
       await NotificationService.instance.initialize();
 
-      debugPrint(
-        'NotificationService inicializado correctamente.',
-      );
-
-
-
-
+      debugPrint('NotificationService inicializado correctamente.');
     } catch (error, stackTrace) {
-      debugPrint(
-        'ERROR AL INICIALIZAR NOTIFICACIONES: $error',
-      );
+      debugPrint('ERROR AL INICIALIZAR NOTIFICACIONES: $error');
 
-      debugPrintStack(
-        stackTrace: stackTrace,
-      );
+      debugPrintStack(stackTrace: stackTrace);
     }
   }
+
+  // =========================================================
+  // 4. MOSTRAR LA APLICACIÓN
+  // =========================================================
+
+  runApp(const VitaCareApp());
 }
 
-class VitaCareApp extends StatelessWidget {
-  const VitaCareApp({
-    super.key,
-  });
+class VitaCareApp extends StatefulWidget {
+  const VitaCareApp({super.key});
+
+  @override
+  State<VitaCareApp> createState() => _VitaCareAppState();
+}
+
+class _VitaCareAppState extends State<VitaCareApp> {
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_handleInitialNotification());
+    });
+  }
+
+  Future<void> _handleInitialNotification() async {
+    try {
+      /*
+       * Esperamos a que MaterialApp, AuthWrapper
+       * y el Navigator terminen de construirse.
+       */
+      await Future<void>.delayed(const Duration(seconds: 2));
+
+      await NotificationService.instance.handleInitialNotification();
+    } catch (error, stackTrace) {
+      debugPrint('Error procesando la notificación inicial: $error');
+
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'VitaCare AI',
-
       debugShowCheckedModeBanner: false,
 
       navigatorKey: NavigationService.navigatorKey,
@@ -106,9 +113,7 @@ class VitaCareApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
 
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.teal,
-        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
 
         scaffoldBackgroundColor: Colors.white,
 
@@ -123,14 +128,9 @@ class VitaCareApp extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.teal,
             foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24,
-              vertical: 14,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(
-                12,
-              ),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),
@@ -140,29 +140,18 @@ class VitaCareApp extends StatelessWidget {
           fillColor: Colors.grey.shade100,
 
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(
-              12,
-            ),
+            borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
 
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(
-              12,
-            ),
-            borderSide: BorderSide(
-              color: Colors.grey.shade300,
-            ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade300),
           ),
 
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(
-              12,
-            ),
-            borderSide: const BorderSide(
-              color: Colors.teal,
-              width: 2,
-            ),
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.teal, width: 2),
           ),
         ),
       ),

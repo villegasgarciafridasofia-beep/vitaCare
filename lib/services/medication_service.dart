@@ -5,47 +5,29 @@ import '../models/medication_model.dart';
 class MedicationService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  Future<void> addMedication(
-      MedicationModel medication,
-      ) async {
+  Future<void> addMedication(MedicationModel medication) async {
     await _db
         .collection('medications')
         .doc(medication.id)
-        .set(
-      medication.toMap(),
-      SetOptions(merge: true),
-    );
+        .set(medication.toMap(), SetOptions(merge: true));
   }
 
-  Future<List<MedicationModel>> getPatientMedications(
-      String patientUid,
-      ) async {
+  Future<List<MedicationModel>> getPatientMedications(String patientUid) async {
     final query = await _db
         .collection('medications')
-        .where(
-      'patientUid',
-      isEqualTo: patientUid,
-    )
+        .where('patientUid', isEqualTo: patientUid)
         .get();
 
     final medications = query.docs
-        .map(
-          (doc) => MedicationModel.fromMap(
-        doc.data(),
-      ),
-    )
+        .map((doc) => MedicationModel.fromMap(doc.data()))
         .toList();
 
-    medications.sort(
-          (a, b) => b.createdAt.compareTo(a.createdAt),
-    );
+    medications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     return medications;
   }
 
-  Future<MedicationModel?> getMedicationById(
-      String medicationId,
-      ) async {
+  Future<MedicationModel?> getMedicationById(String medicationId) async {
     final document = await _db
         .collection('medications')
         .doc(medicationId)
@@ -55,59 +37,31 @@ class MedicationService {
       return null;
     }
 
-    return MedicationModel.fromMap(
-      document.data()!,
-    );
+    return MedicationModel.fromMap(document.data()!);
   }
 
-  Future<void> updateMedication(
-      MedicationModel medication,
-      ) async {
+  Future<void> updateMedication(MedicationModel medication) async {
     await _db
         .collection('medications')
         .doc(medication.id)
-        .set(
-      medication.toMap(),
-      SetOptions(merge: true),
-    );
+        .set(medication.toMap(), SetOptions(merge: true));
   }
 
-  Future<void> deactivateMedication(
-      String medicationId,
-      ) async {
-    await _db
-        .collection('medications')
-        .doc(medicationId)
-        .set(
-      {
-        'active': false,
-        'updatedAt': DateTime.now().toIso8601String(),
-      },
-      SetOptions(merge: true),
-    );
+  Future<void> deactivateMedication(String medicationId) async {
+    await _db.collection('medications').doc(medicationId).set({
+      'active': false,
+      'updatedAt': DateTime.now().toIso8601String(),
+    }, SetOptions(merge: true));
   }
 
-  Future<void> activateMedication(
-      String medicationId,
-      ) async {
-    await _db
-        .collection('medications')
-        .doc(medicationId)
-        .set(
-      {
-        'active': true,
-        'updatedAt': DateTime.now().toIso8601String(),
-      },
-      SetOptions(merge: true),
-    );
+  Future<void> activateMedication(String medicationId) async {
+    await _db.collection('medications').doc(medicationId).set({
+      'active': true,
+      'updatedAt': DateTime.now().toIso8601String(),
+    }, SetOptions(merge: true));
   }
 
-  Future<void> deleteMedication(
-      String medicationId,
-      ) async {
-    await _db
-        .collection('medications')
-        .doc(medicationId)
-        .delete();
+  Future<void> deleteMedication(String medicationId) async {
+    await _db.collection('medications').doc(medicationId).delete();
   }
 }

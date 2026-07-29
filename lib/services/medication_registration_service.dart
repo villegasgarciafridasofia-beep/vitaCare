@@ -10,12 +10,9 @@ class MedicationRegistrationService {
     MedicationService? medicationService,
     MedicationLogService? medicationLogService,
     AlarmService? alarmService,
-  })  : _medicationService =
-      medicationService ?? MedicationService(),
-        _medicationLogService =
-            medicationLogService ?? MedicationLogService(),
-        _alarmService =
-            alarmService ?? AlarmService.instance;
+  }) : _medicationService = medicationService ?? MedicationService(),
+       _medicationLogService = medicationLogService ?? MedicationLogService(),
+       _alarmService = alarmService ?? AlarmService.instance;
 
   final MedicationService _medicationService;
   final MedicationLogService _medicationLogService;
@@ -30,9 +27,7 @@ class MedicationRegistrationService {
     required MedicationModel medication,
   }) async {
     // 1. Guardar el medicamento.
-    await _medicationService.addMedication(
-      medication,
-    );
+    await _medicationService.addMedication(medication);
 
     // 2. No programar alarmas para medicamentos inactivos.
     if (!medication.active) {
@@ -45,8 +40,7 @@ class MedicationRegistrationService {
     }
 
     // 4. Calcular la siguiente dosis válida.
-    final DateTime? nextScheduledDateTime =
-    _findNextScheduledDateTime(
+    final DateTime? nextScheduledDateTime = _findNextScheduledDateTime(
       medication: medication,
     );
 
@@ -54,11 +48,9 @@ class MedicationRegistrationService {
       return null;
     }
 
-    final String scheduledTime =
-    _formatTime(nextScheduledDateTime);
+    final String scheduledTime = _formatTime(nextScheduledDateTime);
 
-    final String dose =
-    '${medication.doseQuantity} ${medication.doseUnit}'
+    final String dose = '${medication.doseQuantity} ${medication.doseUnit}'
         .trim();
 
     /*
@@ -71,8 +63,7 @@ class MedicationRegistrationService {
     final DateTime now = DateTime.now();
 
     // 5. Crear el registro pendiente.
-    final MedicationLogModel medicationLog =
-    MedicationLogModel(
+    final MedicationLogModel medicationLog = MedicationLogModel(
       id: medicationLogId,
       patientUid: medication.patientUid,
       medicationId: medication.id,
@@ -88,15 +79,11 @@ class MedicationRegistrationService {
       updatedAt: now,
     );
 
-    await _medicationLogService.createPendingLog(
-      log: medicationLog,
-    );
+    await _medicationLogService.createPendingLog(log: medicationLog);
 
     // 6. Crear la información de la alarma.
     final AlarmPayload alarmPayload = AlarmPayload(
-      notificationId: _generateNotificationId(
-        medicationLogId,
-      ),
+      notificationId: _generateNotificationId(medicationLogId),
       medicationId: medication.id,
       medicationLogId: medicationLog.id,
       patientUid: medication.patientUid,
@@ -109,17 +96,13 @@ class MedicationRegistrationService {
 
     try {
       // 7. Programar la alarma.
-      await _alarmService.scheduleAlarm(
-        payload: alarmPayload,
-      );
+      await _alarmService.scheduleAlarm(payload: alarmPayload);
     } catch (error) {
       /*
        * Si Android no permite programar la alarma,
        * dejamos constancia de que este registro fue cancelado.
        */
-      await _medicationLogService.markAsCancelled(
-        logId: medicationLog.id,
-      );
+      await _medicationLogService.markAsCancelled(logId: medicationLog.id);
 
       rethrow;
     }
@@ -127,37 +110,26 @@ class MedicationRegistrationService {
     return medicationLog;
   }
 
-  DateTime? _findNextScheduledDateTime({
-    required MedicationModel medication,
-  }) {
+  DateTime? _findNextScheduledDateTime({required MedicationModel medication}) {
     final DateTime now = DateTime.now();
 
-    final List<_MedicationTime> parsedTimes = medication.times
-        .map(_parseTime)
-        .whereType<_MedicationTime>()
-        .toList()
-      ..sort(
-            (a, b) {
-          final int hourComparison =
-          a.hour.compareTo(b.hour);
+    final List<_MedicationTime> parsedTimes =
+        medication.times.map(_parseTime).whereType<_MedicationTime>().toList()
+          ..sort((a, b) {
+            final int hourComparison = a.hour.compareTo(b.hour);
 
-          if (hourComparison != 0) {
-            return hourComparison;
-          }
+            if (hourComparison != 0) {
+              return hourComparison;
+            }
 
-          return a.minute.compareTo(b.minute);
-        },
-      );
+            return a.minute.compareTo(b.minute);
+          });
 
     if (parsedTimes.isEmpty) {
       return null;
     }
 
-    final DateTime today = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    );
+    final DateTime today = DateTime(now.year, now.month, now.day);
 
     final DateTime treatmentStartDate = DateTime(
       medication.startDate.year,
@@ -165,8 +137,7 @@ class MedicationRegistrationService {
       medication.startDate.day,
     );
 
-    final DateTime firstDate =
-    treatmentStartDate.isAfter(today)
+    final DateTime firstDate = treatmentStartDate.isAfter(today)
         ? treatmentStartDate
         : today;
 
@@ -175,9 +146,7 @@ class MedicationRegistrationService {
      * la fecha inicial y el día siguiente.
      */
     for (int dayOffset = 0; dayOffset <= 1; dayOffset++) {
-      final DateTime currentDate = firstDate.add(
-        Duration(days: dayOffset),
-      );
+      final DateTime currentDate = firstDate.add(Duration(days: dayOffset));
 
       if (_isAfterTreatmentEnd(
         currentDate: currentDate,
@@ -218,8 +187,7 @@ class MedicationRegistrationService {
   }
 
   _MedicationTime? _parseTime(String value) {
-    final List<String> parts =
-    value.trim().split(':');
+    final List<String> parts = value.trim().split(':');
 
     if (parts.length != 2) {
       return null;
@@ -240,10 +208,7 @@ class MedicationRegistrationService {
       return null;
     }
 
-    return _MedicationTime(
-      hour: hour,
-      minute: minute,
-    );
+    return _MedicationTime(hour: hour, minute: minute);
   }
 
   bool _isAfterTreatmentEnd({
@@ -270,11 +235,9 @@ class MedicationRegistrationService {
   }
 
   String _formatTime(DateTime dateTime) {
-    final String hour =
-    dateTime.hour.toString().padLeft(2, '0');
+    final String hour = dateTime.hour.toString().padLeft(2, '0');
 
-    final String minute =
-    dateTime.minute.toString().padLeft(2, '0');
+    final String minute = dateTime.minute.toString().padLeft(2, '0');
 
     return '$hour:$minute';
   }
@@ -291,10 +254,7 @@ class MedicationRegistrationService {
 }
 
 class _MedicationTime {
-  const _MedicationTime({
-    required this.hour,
-    required this.minute,
-  });
+  const _MedicationTime({required this.hour, required this.minute});
 
   final int hour;
   final int minute;

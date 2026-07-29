@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+
+import '../../services/notification_service.dart';
 import '../linking/scan_qr_view.dart';
 import 'my_patients_view.dart';
+
 class CaregiverDashboardView extends StatelessWidget {
   const CaregiverDashboardView({super.key});
 
@@ -13,8 +16,32 @@ class CaregiverDashboardView extends StatelessWidget {
         backgroundColor: Colors.teal,
         actions: [
           IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications),
+            tooltip: 'Probar alarma',
+            icon: const Icon(Icons.notifications_active),
+            onPressed: () async {
+              try {
+                debugPrint('Campana presionada');
+
+                await NotificationService.instance.showTestNotification();
+
+                if (!context.mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Notificación de prueba enviada'),
+                  ),
+                );
+              } catch (error, stackTrace) {
+                debugPrint('Error al probar la notificación: $error');
+                debugPrintStack(stackTrace: stackTrace);
+
+                if (!context.mounted) return;
+
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text('Error: $error')));
+              }
+            },
           ),
         ],
       ),
@@ -47,9 +74,7 @@ class CaregiverDashboardView extends StatelessWidget {
                 ],
               ),
             ),
-
             const SizedBox(height: 24),
-
             CaregiverCard(
               icon: Icons.qr_code_scanner,
               title: 'Vincular paciente',
@@ -57,9 +82,7 @@ class CaregiverDashboardView extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const ScanQrView(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const ScanQrView()),
                 );
               },
             ),
@@ -70,9 +93,7 @@ class CaregiverDashboardView extends StatelessWidget {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const MyPatientsView(),
-                  ),
+                  MaterialPageRoute(builder: (_) => const MyPatientsView()),
                 );
               },
             ),
@@ -131,10 +152,7 @@ class CaregiverCard extends StatelessWidget {
           backgroundColor: Colors.teal.shade100,
           child: Icon(icon, color: Colors.teal),
         ),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16),
         onTap: onTap,
