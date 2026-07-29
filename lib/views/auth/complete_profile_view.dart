@@ -5,7 +5,8 @@ import '../../models/user_model.dart';
 import '../../routes/app_routes.dart';
 import '../../services/firestore_service.dart';
 import '../../utils/user_utils.dart';
-
+  
+  //widget principal 
 class CompleteProfileView extends StatefulWidget {
   const CompleteProfileView({super.key});
 
@@ -39,7 +40,7 @@ class _CompleteProfileViewState extends State<CompleteProfileView> {
     diseaseNameController.dispose();
     super.dispose();
   }
-
+    // Validaciones asegura que todos los campos esten llenos
   Future<void> saveProfile() async {
     if (nameController.text.trim().isEmpty ||
         paternalLastNameController.text.trim().isEmpty ||
@@ -84,7 +85,7 @@ class _CompleteProfileViewState extends State<CompleteProfileView> {
     }
 
     final isOlderAdult = UserUtils.isOlderAdult(selectedBirthDate!);
-
+    
     final user = UserModel(
       uid: currentUser.uid,
       email: currentUser.email ?? "",
@@ -108,7 +109,7 @@ class _CompleteProfileViewState extends State<CompleteProfileView> {
       patients: [],
       createdAt: DateTime.now(),
     );
-
+    //Guarda en Firestore 
     try {
       setState(() => isLoading = true);
 
@@ -202,7 +203,7 @@ class _CompleteProfileViewState extends State<CompleteProfileView> {
               ),
             ),
             const SizedBox(height: 20),
-
+          //Boton para seleccionar fecha
             ElevatedButton(
               onPressed: selectBirthDate,
               child: Text(
@@ -213,7 +214,7 @@ class _CompleteProfileViewState extends State<CompleteProfileView> {
             ),
 
             const SizedBox(height: 20),
-
+          //Interruptor 
             SwitchListTile(
               title: const Text("¿Padece alguna enfermedad?"),
               value: hasDisease,
@@ -233,7 +234,7 @@ class _CompleteProfileViewState extends State<CompleteProfileView> {
               ),
 
             const SizedBox(height: 20),
-
+           //Selector de Rol 
             DropdownButtonFormField<String>(
               value: selectedRole,
               decoration: const InputDecoration(
@@ -261,7 +262,7 @@ class _CompleteProfileViewState extends State<CompleteProfileView> {
             ),
 
             const SizedBox(height: 30),
-
+             //Boton de Guardar Perfil 
             SizedBox(
               height: 50,
               child: ElevatedButton(
