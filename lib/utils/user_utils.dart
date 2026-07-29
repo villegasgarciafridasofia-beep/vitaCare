@@ -24,7 +24,7 @@ class UserUtils {
 
     final code = List.generate(
       6,
-          (_) => chars[random.nextInt(chars.length)],
+      (_) => chars[random.nextInt(chars.length)],
     ).join();
 
     return 'VC-$code';

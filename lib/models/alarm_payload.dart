@@ -49,9 +49,7 @@ class AlarmPayload {
       dose: json['dose']?.toString() ?? '',
       instructions: json['instructions']?.toString() ?? '',
       scheduledTime: json['scheduledTime']?.toString() ?? '',
-      scheduledDateTime: DateTime.parse(
-        json['scheduledDateTime'].toString(),
-      ),
+      scheduledDateTime: DateTime.parse(json['scheduledDateTime'].toString()),
     );
   }
 

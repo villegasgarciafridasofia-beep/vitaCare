@@ -23,9 +23,7 @@ class _MyCaregiversViewState extends State<MyCaregiversView> {
       return [];
     }
 
-    return firestoreService.getCaregivers(
-      patient.caregivers,
-    );
+    return firestoreService.getCaregivers(patient.caregivers);
   }
 
   @override
@@ -38,21 +36,14 @@ class _MyCaregiversViewState extends State<MyCaregiversView> {
       body: FutureBuilder<List<UserModel>>(
         future: loadCaregivers(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
           }
 
           final caregivers = snapshot.data ?? [];
 
           if (caregivers.isEmpty) {
-            return const Center(
-              child: Text(
-                'No tienes cuidadores vinculados',
-              ),
-            );
+            return const Center(child: Text('No tienes cuidadores vinculados'));
           }
 
           return ListView.builder(
@@ -65,24 +56,17 @@ class _MyCaregiversViewState extends State<MyCaregiversView> {
                 child: ListTile(
                   leading: CircleAvatar(
                     child: Text(
-                      caregiver.name.isNotEmpty
-                          ? caregiver.name[0]
-                          : '?',
+                      caregiver.name.isNotEmpty ? caregiver.name[0] : '?',
                     ),
                   ),
                   title: Text(
                     '${caregiver.name} ${caregiver.paternalLastName}',
                   ),
                   subtitle: Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Correo: ${caregiver.email}',
-                      ),
-                      Text(
-                        'Teléfono: ${caregiver.phoneNumber}',
-                      ),
+                      Text('Correo: ${caregiver.email}'),
+                      Text('Teléfono: ${caregiver.phoneNumber}'),
                     ],
                   ),
                 ),

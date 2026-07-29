@@ -8,9 +8,7 @@ class AlarmScheduler {
 
   static final AlarmScheduler instance = AlarmScheduler._();
 
-  Future<void> schedule({
-    required AlarmPayload payload,
-  }) async {
+  Future<void> schedule({required AlarmPayload payload}) async {
     final DateTime now = DateTime.now();
 
     if (!payload.scheduledDateTime.isAfter(now)) {
@@ -21,25 +19,19 @@ class AlarmScheduler {
 
     debugPrint(
       'Programando alarma: ${payload.medicationName} '
-          'para ${payload.scheduledDateTime}',
+      'para ${payload.scheduledDateTime}',
     );
 
-    await NotificationService.instance
-        .scheduleMedicationNotification(
+    await NotificationService.instance.scheduleMedicationNotification(
       payload: payload,
     );
   }
 
-  Future<void> cancel({
-    required int notificationId,
-  }) async {
-    await NotificationService.instance.cancelNotification(
-      notificationId,
-    );
+  Future<void> cancel({required int notificationId}) async {
+    await NotificationService.instance.cancelNotification(notificationId);
   }
 
   Future<void> cancelAll() async {
-    await NotificationService.instance
-        .cancelAllNotifications();
+    await NotificationService.instance.cancelAllNotifications();
   }
 }

@@ -28,8 +28,7 @@ class _ScanQrViewState extends State<ScanQrView> {
 
       final patientUid = data['uid'];
 
-      final caregiverUid =
-          FirebaseAuth.instance.currentUser!.uid;
+      final caregiverUid = FirebaseAuth.instance.currentUser!.uid;
 
       await linkingService.linkPatientAndCaregiver(
         patientUid: patientUid,
@@ -39,22 +38,16 @@ class _ScanQrViewState extends State<ScanQrView> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Paciente vinculado correctamente'),
-        ),
+        const SnackBar(content: Text('Paciente vinculado correctamente')),
       );
 
       Navigator.pop(context);
-
     } catch (e) {
-
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString()),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
 
       scanned = false;
     }
@@ -69,7 +62,6 @@ class _ScanQrViewState extends State<ScanQrView> {
       ),
       body: MobileScanner(
         onDetect: (capture) {
-
           final barcode = capture.barcodes.first;
 
           final value = barcode.rawValue;

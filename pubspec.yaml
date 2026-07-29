@@ -1,5 +1,5 @@
 name: proyectovita
-description: "VitaCare AI"
+description: "VitaCare"
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -45,7 +45,18 @@ dev_dependencies:
     sdk: flutter
 
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/logo.png"
 
 flutter:
   uses-material-design: true
 
+  assets:
+    - assets/images/logo.png
+    - assets/images/login_background.png
+    - assets/images/google_logo.png
+    - assets/images/logo2.png

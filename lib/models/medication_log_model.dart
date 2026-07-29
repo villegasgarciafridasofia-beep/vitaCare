@@ -57,8 +57,7 @@ class MedicationLogModel {
       medicationId: medicationId ?? this.medicationId,
       medicationName: medicationName ?? this.medicationName,
       scheduledTime: scheduledTime ?? this.scheduledTime,
-      scheduledDateTime:
-      scheduledDateTime ?? this.scheduledDateTime,
+      scheduledDateTime: scheduledDateTime ?? this.scheduledDateTime,
       confirmedAt: confirmedAt ?? this.confirmedAt,
       status: status ?? this.status,
       snoozeCount: snoozeCount ?? this.snoozeCount,
@@ -76,8 +75,7 @@ class MedicationLogModel {
       'medicationId': medicationId,
       'medicationName': medicationName,
       'scheduledTime': scheduledTime,
-      'scheduledDateTime':
-      Timestamp.fromDate(scheduledDateTime),
+      'scheduledDateTime': Timestamp.fromDate(scheduledDateTime),
       'confirmedAt': confirmedAt == null
           ? null
           : Timestamp.fromDate(confirmedAt!),
@@ -90,18 +88,14 @@ class MedicationLogModel {
     };
   }
 
-  factory MedicationLogModel.fromMap(
-      Map<String, dynamic> map,
-      ) {
+  factory MedicationLogModel.fromMap(Map<String, dynamic> map) {
     return MedicationLogModel(
       id: map['id'] ?? '',
       patientUid: map['patientUid'] ?? '',
       medicationId: map['medicationId'] ?? '',
       medicationName: map['medicationName'] ?? '',
       scheduledTime: map['scheduledTime'] ?? '',
-      scheduledDateTime: _dateFromValue(
-        map['scheduledDateTime'],
-      ),
+      scheduledDateTime: _dateFromValue(map['scheduledDateTime']),
       confirmedAt: map['confirmedAt'] == null
           ? null
           : _dateFromValue(map['confirmedAt']),
@@ -109,12 +103,8 @@ class MedicationLogModel {
       snoozeCount: map['snoozeCount'] ?? 0,
       dose: map['dose'] ?? '',
       instructions: map['instructions'] ?? '',
-      createdAt: _dateFromValue(
-        map['createdAt'],
-      ),
-      updatedAt: _dateFromValue(
-        map['updatedAt'],
-      ),
+      createdAt: _dateFromValue(map['createdAt']),
+      updatedAt: _dateFromValue(map['updatedAt']),
     );
   }
 

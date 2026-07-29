@@ -11,9 +11,7 @@ class SmartScheduleService {
     switch (frequency) {
       case 'Una vez al día':
       case 'Cada 24 horas':
-        return [
-          breakfastTime.isNotEmpty ? breakfastTime : wakeUpTime,
-        ];
+        return [breakfastTime.isNotEmpty ? breakfastTime : wakeUpTime];
 
       case 'Cada 12 horas':
         return _generateIntervalTimes(
@@ -40,9 +38,7 @@ class SmartScheduleService {
         );
 
       case 'Antes de dormir':
-        return [
-          sleepTime,
-        ];
+        return [sleepTime];
 
       default:
         return [];
@@ -70,16 +66,13 @@ class SmartScheduleService {
     const minutesInDay = 24 * 60;
 
     while (times.length < 4) {
-      final normalizedMinutes =
-          currentMinutes % minutesInDay;
+      final normalizedMinutes = currentMinutes % minutesInDay;
 
-      final isNightTime = sleepTime.isNotEmpty &&
-          normalizedMinutes > sleepMinutes;
+      final isNightTime =
+          sleepTime.isNotEmpty && normalizedMinutes > sleepMinutes;
 
       if (allowNightReminders || !isNightTime) {
-        times.add(
-          _minutesToTime(normalizedMinutes),
-        );
+        times.add(_minutesToTime(normalizedMinutes));
       }
 
       currentMinutes += intervalHours * 60;

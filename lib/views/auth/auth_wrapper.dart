@@ -1,12 +1,13 @@
-import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 
 import '../../services/firestore_service.dart';
-import 'login_view.dart';
-import 'complete_profile_view.dart';
-import 'routine_setup_view.dart';
-import '../patient/patient_dashboard_view.dart';
+import '../../services/navigation_service.dart';
 import '../caregiver/caregiver_dashboard_view.dart';
+import '../patient/patient_dashboard_view.dart';
+import 'complete_profile_view.dart';
+import 'login_view.dart';
+import 'routine_setup_view.dart';
 
 class AuthWrapper extends StatelessWidget {
   AuthWrapper({super.key});
@@ -25,12 +26,10 @@ class AuthWrapper extends StatelessWidget {
 
         // Error al comprobar la autenticación
         if (authSnapshot.hasError) {
-          return const _ErrorView(
-            message: 'No se pudo verificar la sesión.',
-          );
+          return const _ErrorView(message: 'No se pudo verificar la sesión.');
         }
 
-        final firebaseUser = authSnapshot.data;
+        final User? firebaseUser = authSnapshot.data;
 
         // No hay una sesión iniciada
         if (firebaseUser == null) {
@@ -40,7 +39,7 @@ class AuthWrapper extends StatelessWidget {
         return FutureBuilder(
           future: firestoreService.getUser(firebaseUser.uid),
           builder: (context, userSnapshot) {
-            // Mientras se obtiene el perfil de Firestore
+            // Mientras se obtiene el perfil
             if (userSnapshot.connectionState == ConnectionState.waiting) {
               return const _LoadingView();
             }
@@ -54,17 +53,17 @@ class AuthWrapper extends StatelessWidget {
 
             final user = userSnapshot.data;
 
-            // El usuario está autenticado, pero todavía no tiene perfil
+            // Usuario sin perfil
             if (user == null) {
               return const CompleteProfileView();
             }
 
-            // El perfil existe, pero todavía está incompleto
+            // Perfil incompleto
             if (!user.isProfileComplete) {
               return const CompleteProfileView();
             }
 
-            // El perfil está completo, pero falta configurar la rutina
+            // Rutina sin configurar
             if (!user.isRoutineConfigured) {
               return const RoutineSetupView();
             }
@@ -72,14 +71,14 @@ class AuthWrapper extends StatelessWidget {
             // Navegación según el rol
             switch (user.role.toLowerCase().trim()) {
               case 'caregiver':
-                return const CaregiverDashboardView();
+                return const _AppReadyView(child: CaregiverDashboardView());
 
               case 'both':
-                return const PatientDashboardView();
+                return const _AppReadyView(child: PatientDashboardView());
 
               case 'patient':
               default:
-                return const PatientDashboardView();
+                return const _AppReadyView(child: PatientDashboardView());
             }
           },
         );
@@ -93,33 +92,49 @@ class _LoadingView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: CircularProgressIndicator(),
-      ),
-    );
+    return const Scaffold(body: Center(child: CircularProgressIndicator()));
   }
 }
 
 class _ErrorView extends StatelessWidget {
   final String message;
 
-  const _ErrorView({
-    required this.message,
-  });
+  const _ErrorView({required this.message});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            message,
-            textAlign: TextAlign.center,
-          ),
+          padding: EdgeInsets.all(24),
+          child: Text(message, textAlign: TextAlign.center),
         ),
       ),
     );
+  }
+}
+
+class _AppReadyView extends StatefulWidget {
+  final Widget child;
+
+  const _AppReadyView({required this.child});
+
+  @override
+  State<_AppReadyView> createState() => _AppReadyViewState();
+}
+
+class _AppReadyViewState extends State<_AppReadyView> {
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      NavigationService.markAppReady();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
   }
 }

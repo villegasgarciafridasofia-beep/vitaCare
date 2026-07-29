@@ -5,6 +5,7 @@ import '../views/auth/register_view.dart';
 import '../views/auth/complete_profile_view.dart';
 import '../views/patient/patient_dashboard_view.dart';
 import '../views/caregiver/caregiver_dashboard_view.dart';
+import '../views/auth/recuperarcontraseña_view.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -13,6 +14,7 @@ class AppRoutes {
   static const String patientDashboard = '/patient-dashboard';
   static const String caregiverDashboard = '/caregiver-dashboard';
   static const String routineSetup = '/routine-setup';
+  static const String recuperarContrasena = '/recuperar-contrasena';
   static Map<String, WidgetBuilder> routes = {
     login: (context) => const LoginView(),
     register: (context) => const RegisterView(),
@@ -20,5 +22,6 @@ class AppRoutes {
     patientDashboard: (context) => const PatientDashboardView(),
     caregiverDashboard: (context) => const CaregiverDashboardView(),
     routineSetup: (context) => const RoutineSetupView(),
+    recuperarContrasena: (context) => const RecuperarContrasenaView(),
   };
 }

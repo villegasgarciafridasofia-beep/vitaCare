@@ -17,16 +17,13 @@ class _MyPatientsViewState extends State<MyPatientsView> {
   Future<List<UserModel>> loadPatients() async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
-    final caregiver =
-    await firestoreService.getUser(uid);
+    final caregiver = await firestoreService.getUser(uid);
 
     if (caregiver == null) {
       return [];
     }
 
-    return firestoreService.getPatients(
-      caregiver.patients,
-    );
+    return firestoreService.getPatients(caregiver.patients);
   }
 
   @override
@@ -39,28 +36,19 @@ class _MyPatientsViewState extends State<MyPatientsView> {
       body: FutureBuilder<List<UserModel>>(
         future: loadPatients(),
         builder: (context, snapshot) {
-
-          if (snapshot.connectionState ==
-              ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
           }
 
           final patients = snapshot.data ?? [];
 
           if (patients.isEmpty) {
-            return const Center(
-              child: Text(
-                'No tienes pacientes vinculados',
-              ),
-            );
+            return const Center(child: Text('No tienes pacientes vinculados'));
           }
 
           return ListView.builder(
             itemCount: patients.length,
             itemBuilder: (context, index) {
-
               final patient = patients[index];
 
               return Card(
@@ -68,28 +56,18 @@ class _MyPatientsViewState extends State<MyPatientsView> {
                 child: ListTile(
                   leading: CircleAvatar(
                     child: Text(
-                      patient.name.isNotEmpty
-                          ? patient.name[0]
-                          : '?',
+                      patient.name.isNotEmpty ? patient.name[0] : '?',
                     ),
                   ),
 
-                  title: Text(
-                    '${patient.name} ${patient.paternalLastName}',
-                  ),
+                  title: Text('${patient.name} ${patient.paternalLastName}'),
 
                   subtitle: Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Text('Edad mayor: ${patient.isOlderAdult ? "Sí" : "No"}'),
 
-                      Text(
-                        'Edad mayor: ${patient.isOlderAdult ? "Sí" : "No"}',
-                      ),
-
-                      Text(
-                        'Enfermedades: ${patient.diseases.join(", ")}',
-                      ),
+                      Text('Enfermedades: ${patient.diseases.join(", ")}'),
                     ],
                   ),
                 ),
