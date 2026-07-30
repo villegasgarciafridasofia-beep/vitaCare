@@ -8,10 +8,18 @@ import '../../services/medication_service.dart';
 import '../../services/smart_schedule_service.dart';
 
 class AddMedicationView extends StatefulWidget {
-  const AddMedicationView({super.key});
+  final MedicationModel? medication;
+
+  const AddMedicationView({
+    super.key,
+    this.medication,
+  });
+
+  bool get isEditing => medication != null;
 
   @override
-  State<AddMedicationView> createState() => _AddMedicationViewState();
+  State<AddMedicationView> createState() =>
+      _AddMedicationViewState();
 }
 
 class _AddMedicationViewState extends State<AddMedicationView> {
@@ -99,7 +107,39 @@ class _AddMedicationViewState extends State<AddMedicationView> {
   @override
   void initState() {
     super.initState();
+
+    if (widget.medication != null) {
+      loadMedicationData();
+    }
+
     loadCurrentUser();
+  }
+
+  void loadMedicationData() {
+    final MedicationModel medication = widget.medication!;
+
+    nameController.text = medication.name;
+    treatmentReasonController.text = medication.treatmentReason;
+    doctorNameController.text = medication.doctorName;
+    observationsController.text = medication.observations;
+
+    selectedCategory = medication.category;
+    selectedMedicineForm = medication.medicineForm;
+    selectedDoseQuantity = medication.doseQuantity;
+    selectedDoseUnit = medication.doseUnit;
+    selectedPriority = medication.priority;
+    selectedFrequency = medication.frequency;
+    selectedInstruction = medication.instructions;
+
+    isControlled = medication.isControlled;
+    requiresPrescription = medication.requiresPrescription;
+    requiresCaregiverSupervision =
+        medication.requiresCaregiverSupervision;
+
+    startDate = medication.startDate;
+    endDate = medication.endDate;
+
+    selectedTimes = List<String>.from(medication.times)..sort();
   }
 
   @override
@@ -144,50 +184,83 @@ class _AddMedicationViewState extends State<AddMedicationView> {
   }
 
   List<int> getDoseQuantitiesByForm(String? form) {
+    final List<int> quantities;
+
     switch (form) {
       case 'Jarabe':
       case 'Solución oral':
-        return [2, 5, 10, 15, 20];
+        quantities = [2, 5, 10, 15, 20];
+        break;
 
       case 'Gotas':
-        return [1, 2, 3, 5, 10, 15, 20];
+        quantities = [1, 2, 3, 5, 10, 15, 20];
+        break;
 
       case 'Inyección':
-        return [1, 2, 5, 10];
+        quantities = [1, 2, 5, 10];
+        break;
 
       default:
-        return [1, 2, 3, 4, 5];
+        quantities = [1, 2, 3, 4, 5];
     }
-  }
 
+    if (selectedDoseQuantity != null &&
+        !quantities.contains(selectedDoseQuantity)) {
+      quantities.add(selectedDoseQuantity!);
+      quantities.sort();
+    }
+
+    return quantities;
+  }
   List<String> getDoseUnitsByForm(String? form) {
+    final List<String> units;
+
     switch (form) {
       case 'Tableta':
-        return ['tableta', 'mg', 'g'];
+        units = ['tableta', 'mg', 'g'];
+        break;
 
       case 'Cápsula':
-        return ['cápsula', 'mg', 'g'];
+        units = ['cápsula', 'mg', 'g'];
+        break;
 
       case 'Jarabe':
       case 'Solución oral':
-        return ['ml', 'cucharada', 'cucharadita'];
+        units = [
+          'ml',
+          'cucharada',
+          'cucharadita',
+        ];
+        break;
 
       case 'Gotas':
-        return ['gotas', 'ml'];
+        units = ['gotas', 'ml'];
+        break;
 
       case 'Inyección':
-        return ['ml', 'mg'];
+        units = ['ml', 'mg'];
+        break;
 
       case 'Inhalador':
-        return ['puff', 'aplicación'];
+        units = ['puff', 'aplicación'];
+        break;
 
       case 'Crema':
       case 'Pomada':
-        return ['aplicación', 'g'];
+        units = ['aplicación', 'g'];
+        break;
 
       default:
-        return ['mg', 'ml'];
+        units = ['mg', 'ml'];
     }
+
+    if (selectedDoseUnit != null &&
+        selectedDoseUnit!.isNotEmpty &&
+        !units.contains(selectedDoseUnit)) {
+      units.add(selectedDoseUnit!);
+    }
+
+    return units;
   }
 
   void showMessage(String message) {
@@ -355,29 +428,45 @@ class _AddMedicationViewState extends State<AddMedicationView> {
     }
 
     final now = DateTime.now();
+    final MedicationModel? originalMedication =
+        widget.medication;
 
     final medication = MedicationModel(
-      id: now.microsecondsSinceEpoch.toString(),
-      patientUid: firebaseUser.uid,
+      id: originalMedication?.id ??
+          now.microsecondsSinceEpoch.toString(),
+
+      patientUid: originalMedication?.patientUid ??
+          firebaseUser.uid,
+
       name: nameController.text.trim(),
       category: selectedCategory!,
       medicineForm: selectedMedicineForm!,
       doseQuantity: selectedDoseQuantity!,
       doseUnit: selectedDoseUnit!,
+
       isControlled: isControlled,
       requiresPrescription: requiresPrescription,
-      requiresCaregiverSupervision: requiresCaregiverSupervision,
+      requiresCaregiverSupervision:
+      requiresCaregiverSupervision,
+
       priority: selectedPriority!,
-      treatmentReason: treatmentReasonController.text.trim(),
+      treatmentReason:
+      treatmentReasonController.text.trim(),
       doctorName: doctorNameController.text.trim(),
+
       frequency: selectedFrequency!,
       instructions: selectedInstruction!,
-      times: selectedTimes,
+      times: List<String>.from(selectedTimes),
+
       startDate: startDate!,
       endDate: endDate,
-      observations: observationsController.text.trim(),
-      active: true,
-      createdAt: now,
+
+      observations:
+      observationsController.text.trim(),
+
+      active: originalMedication?.active ?? true,
+
+      createdAt: originalMedication?.createdAt ?? now,
       updatedAt: now,
     );
 
@@ -386,14 +475,26 @@ class _AddMedicationViewState extends State<AddMedicationView> {
         isLoading = true;
       });
 
-      await MedicationRegistrationService().registerMedication(
-        medication: medication,
-      );
-
+      if (widget.isEditing) {
+        await medicationService.updateMedication(
+          medication,
+        );
+      } else {
+        await MedicationRegistrationService()
+            .registerMedication(
+          medication: medication,
+        );
+      }
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Medicamento guardado correctamente.')),
+        SnackBar(
+          content: Text(
+            widget.isEditing
+                ? 'Medicamento actualizado correctamente.'
+                : 'Medicamento guardado correctamente.',
+          ),
+        ),
       );
 
       Navigator.pop(context, true);
@@ -476,7 +577,11 @@ class _AddMedicationViewState extends State<AddMedicationView> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F8FB),
       appBar: AppBar(
-        title: const Text('Agregar medicamento'),
+        title: Text(
+          widget.isEditing
+              ? 'Editar medicamento'
+              : 'Agregar medicamento',
+        ),
         backgroundColor: Colors.teal,
       ),
       body: Form(
@@ -597,10 +702,10 @@ class _AddMedicationViewState extends State<AddMedicationView> {
                       onChanged: selectedMedicineForm == null
                           ? null
                           : (value) {
-                              setState(() {
-                                selectedDoseQuantity = value;
-                              });
-                            },
+                        setState(() {
+                          selectedDoseQuantity = value;
+                        });
+                      },
                       validator: (value) {
                         if (value == null) {
                           return 'Selecciona la cantidad';
@@ -629,10 +734,10 @@ class _AddMedicationViewState extends State<AddMedicationView> {
                       onChanged: selectedMedicineForm == null
                           ? null
                           : (value) {
-                              setState(() {
-                                selectedDoseUnit = value;
-                              });
-                            },
+                        setState(() {
+                          selectedDoseUnit = value;
+                        });
+                      },
                       validator: (value) {
                         if (value == null) {
                           return 'Selecciona la unidad';
@@ -851,9 +956,9 @@ class _AddMedicationViewState extends State<AddMedicationView> {
                             Expanded(
                               child: Text(
                                 'Se generaron automáticamente '
-                                '${selectedTimes.length} horario(s) '
-                                'según tu rutina diaria. Puedes '
-                                'modificarlos si es necesario.',
+                                    '${selectedTimes.length} horario(s) '
+                                    'según tu rutina diaria. Puedes '
+                                    'modificarlos si es necesario.',
                               ),
                             ),
                           ],
@@ -968,7 +1073,7 @@ class _AddMedicationViewState extends State<AddMedicationView> {
                       decoration: const InputDecoration(
                         labelText: 'Observaciones',
                         hintText:
-                            'Ejemplo: conservar en refrigeración o tomar con abundante agua',
+                        'Ejemplo: conservar en refrigeración o tomar con abundante agua',
                         border: OutlineInputBorder(),
                         alignLabelWithHint: true,
                       ),
@@ -984,16 +1089,26 @@ class _AddMedicationViewState extends State<AddMedicationView> {
                     onPressed: isLoading ? null : saveMedication,
                     icon: isLoading
                         ? const SizedBox(
-                            width: 21,
-                            height: 21,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(Icons.save_outlined),
+                      width: 21,
+                      height: 21,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                        : Icon(
+                      widget.isEditing
+                          ? Icons.save_as_outlined
+                          : Icons.save_outlined,
+                    ),
                     label: Text(
-                      isLoading ? 'Guardando...' : 'Guardar medicamento',
+                      isLoading
+                          ? widget.isEditing
+                          ? 'Guardando cambios...'
+                          : 'Guardando...'
+                          : widget.isEditing
+                          ? 'Guardar cambios'
+                          : 'Guardar medicamento',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
