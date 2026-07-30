@@ -26,7 +26,22 @@ class _MedicationsViewState extends State<MedicationsView> {
     super.initState();
     loadMedications();
   }
+  Future<void> openEditMedication(
+      MedicationModel medication,
+      ) async {
+    final bool? result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AddMedicationView(
+          medication: medication,
+        ),
+      ),
+    );
 
+    if (result == true) {
+      await loadMedications();
+    }
+  }
   Future<void> loadMedications() async {
     final firebaseUser = FirebaseAuth.instance.currentUser;
 
@@ -238,7 +253,7 @@ class _MedicationsViewState extends State<MedicationsView> {
           title: const Text('Eliminar medicamento'),
           content: Text(
             '¿Estás seguro de eliminar ${medication.name}?\n\n'
-            'Esta acción no se puede deshacer.',
+                'Esta acción no se puede deshacer.',
           ),
           actions: [
             TextButton(
@@ -354,8 +369,8 @@ class _MedicationsViewState extends State<MedicationsView> {
                                   const SizedBox(height: 4),
                                   Text(
                                     '${medication.doseQuantity} '
-                                    '${medication.doseUnit} • '
-                                    '${medication.medicineForm}',
+                                        '${medication.doseUnit} • '
+                                        '${medication.medicineForm}',
                                     style: TextStyle(
                                       color: Colors.grey.shade700,
                                       fontSize: 15,
@@ -483,10 +498,10 @@ class _MedicationsViewState extends State<MedicationsView> {
                             onPressed: isProcessing
                                 ? null
                                 : () async {
-                                    Navigator.pop(sheetContext);
+                              Navigator.pop(sheetContext);
 
-                                    await toggleMedicationStatus(medication);
-                                  },
+                              await toggleMedicationStatus(medication);
+                            },
                             icon: Icon(
                               medication.active
                                   ? Icons.pause_circle_outline
@@ -510,10 +525,10 @@ class _MedicationsViewState extends State<MedicationsView> {
                             onPressed: isProcessing
                                 ? null
                                 : () async {
-                                    Navigator.pop(sheetContext);
+                              Navigator.pop(sheetContext);
 
-                                    await confirmDeleteMedication(medication);
-                                  },
+                              await confirmDeleteMedication(medication);
+                            },
                             icon: const Icon(Icons.delete_outline),
                             label: const Text('Eliminar medicamento'),
                           ),
@@ -672,8 +687,8 @@ class _MedicationsViewState extends State<MedicationsView> {
                         const SizedBox(height: 5),
                         Text(
                           '${medication.doseQuantity} '
-                          '${medication.doseUnit} • '
-                          '${medication.medicineForm}',
+                              '${medication.doseUnit} • '
+                              '${medication.medicineForm}',
                           style: TextStyle(color: Colors.grey.shade700),
                         ),
                       ],
@@ -682,8 +697,14 @@ class _MedicationsViewState extends State<MedicationsView> {
                   PopupMenuButton<String>(
                     enabled: !isProcessing,
                     onSelected: (value) async {
+                      if (value == 'edit') {
+                        await openEditMedication(medication);
+                        return;
+                      }
+
                       if (value == 'status') {
                         await toggleMedicationStatus(medication);
+                        return;
                       }
 
                       if (value == 'delete') {
@@ -692,6 +713,20 @@ class _MedicationsViewState extends State<MedicationsView> {
                     },
                     itemBuilder: (context) {
                       return [
+                        const PopupMenuItem<String>(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.edit_outlined,
+                                color: Color(0xFF285F50),
+                              ),
+                              SizedBox(width: 10),
+                              Text('Editar medicamento'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuDivider(),
                         PopupMenuItem<String>(
                           value: 'status',
                           child: Row(
@@ -702,7 +737,11 @@ class _MedicationsViewState extends State<MedicationsView> {
                                     : Icons.play_circle_outline,
                               ),
                               const SizedBox(width: 10),
-                              Text(medication.active ? 'Pausar' : 'Reactivar'),
+                              Text(
+                                medication.active
+                                    ? 'Pausar'
+                                    : 'Reactivar',
+                              ),
                             ],
                           ),
                         ),
@@ -711,11 +750,16 @@ class _MedicationsViewState extends State<MedicationsView> {
                           value: 'delete',
                           child: Row(
                             children: [
-                              Icon(Icons.delete_outline, color: Colors.red),
+                              Icon(
+                                Icons.delete_outline,
+                                color: Colors.red,
+                              ),
                               SizedBox(width: 10),
                               Text(
                                 'Eliminar',
-                                style: TextStyle(color: Colors.red),
+                                style: TextStyle(
+                                  color: Colors.red,
+                                ),
                               ),
                             ],
                           ),
