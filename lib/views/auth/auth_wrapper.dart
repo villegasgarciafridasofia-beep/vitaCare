@@ -33,6 +33,7 @@ class AuthWrapper extends StatelessWidget {
 
         // No hay una sesión iniciada
         if (firebaseUser == null) {
+          NavigationService.resetAppReady();
           return const LoginView();
         }
 
@@ -63,13 +64,15 @@ class AuthWrapper extends StatelessWidget {
               return const CompleteProfileView();
             }
 
-            // Rutina sin configurar
-            if (!user.isRoutineConfigured) {
+            final String role = user.role.toLowerCase().trim();
+
+            // La rutina solo es obligatoria para paciente o perfil mixto.
+            if (role != 'caregiver' && !user.isRoutineConfigured) {
               return const RoutineSetupView();
             }
 
             // Navegación según el rol
-            switch (user.role.toLowerCase().trim()) {
+            switch (role) {
               case 'caregiver':
                 return const _AppReadyView(child: CaregiverDashboardView());
 

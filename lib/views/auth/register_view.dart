@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../../routes/app_routes.dart';
@@ -97,16 +98,35 @@ class _RegisterViewState extends State<RegisterView> {
 
       if (!mounted) return;
 
-      Navigator.pushReplacementNamed(
+      Navigator.pushNamedAndRemoveUntil(
         context,
-        AppRoutes.completeProfile,
+        AppRoutes.auth,
+        (route) => false,
       );
-    } catch (error) {
+    } on FirebaseAuthException catch (error) {
       if (!mounted) return;
 
-      _showErrorMessage(
-        'No pudimos crear la cuenta. Verifica tus datos e intenta nuevamente.',
-      );
+      final String message = switch (error.code) {
+        'email-already-in-use' =>
+          'Este correo ya está registrado. Inicia sesión o recupera tu contraseña.',
+        'invalid-email' => 'El correo electrónico no es válido.',
+        'weak-password' =>
+          'La contraseña es muy débil. Usa al menos 6 caracteres.',
+        'operation-not-allowed' =>
+          'El registro con correo no está habilitado.',
+        _ => 'No pudimos crear la cuenta. Inténtalo nuevamente.',
+      };
+
+      setState(() {
+        if (error.code == 'email-already-in-use' ||
+            error.code == 'invalid-email') {
+          emailError = message;
+        }
+      });
+      _showErrorMessage(message);
+    } catch (error) {
+      if (!mounted) return;
+      _showErrorMessage('No pudimos crear la cuenta. Inténtalo nuevamente.');
     } finally {
       if (mounted) {
         setState(() {
@@ -126,9 +146,10 @@ class _RegisterViewState extends State<RegisterView> {
 
       if (!mounted) return;
 
-      Navigator.pushReplacementNamed(
+      Navigator.pushNamedAndRemoveUntil(
         context,
-        AppRoutes.completeProfile,
+        AppRoutes.auth,
+        (route) => false,
       );
     } catch (error) {
       if (!mounted) return;

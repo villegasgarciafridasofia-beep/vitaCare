@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../views/auth/routine_setup_view.dart';
+import '../views/auth/auth_wrapper.dart';
 import '../views/auth/login_view.dart';
 import '../views/auth/register_view.dart';
 import '../views/auth/complete_profile_view.dart';
@@ -8,6 +9,7 @@ import '../views/caregiver/caregiver_dashboard_view.dart';
 import '../views/auth/recuperarcontraseña_view.dart';
 
 class AppRoutes {
+  static const String auth = '/auth';
   static const String login = '/login';
   static const String register = '/register';
   static const String completeProfile = '/complete-profile';
@@ -16,6 +18,7 @@ class AppRoutes {
   static const String routineSetup = '/routine-setup';
   static const String recuperarContrasena = '/recuperar-contrasena';
   static Map<String, WidgetBuilder> routes = {
+    auth: (context) => AuthWrapper(),
     login: (context) => const LoginView(),
     register: (context) => const RegisterView(),
     completeProfile: (context) => const CompleteProfileView(),

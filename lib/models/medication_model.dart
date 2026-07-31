@@ -19,6 +19,11 @@ class MedicationModel {
   final DateTime? endDate;
   final String observations;
   final bool active;
+
+  // Nuevos campos
+  final bool firstDoseTaken;
+  final DateTime? scheduleAnchorTime;
+
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -43,6 +48,11 @@ class MedicationModel {
     this.endDate,
     required this.observations,
     required this.active,
+
+    // Valores por defecto para no romper medicamentos antiguos
+    this.firstDoseTaken = false,
+    this.scheduleAnchorTime,
+
     required this.createdAt,
     required this.updatedAt,
   });
@@ -58,7 +68,8 @@ class MedicationModel {
       'doseUnit': doseUnit,
       'isControlled': isControlled,
       'requiresPrescription': requiresPrescription,
-      'requiresCaregiverSupervision': requiresCaregiverSupervision,
+      'requiresCaregiverSupervision':
+      requiresCaregiverSupervision,
       'priority': priority,
       'treatmentReason': treatmentReason,
       'doctorName': doctorName,
@@ -69,12 +80,20 @@ class MedicationModel {
       'endDate': endDate?.toIso8601String(),
       'observations': observations,
       'active': active,
+
+      // Nuevos campos
+      'firstDoseTaken': firstDoseTaken,
+      'scheduleAnchorTime':
+      scheduleAnchorTime?.toIso8601String(),
+
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
   }
 
-  factory MedicationModel.fromMap(Map<String, dynamic> map) {
+  factory MedicationModel.fromMap(
+      Map<String, dynamic> map,
+      ) {
     return MedicationModel(
       id: map['id'] ?? '',
       patientUid: map['patientUid'] ?? '',
@@ -84,24 +103,43 @@ class MedicationModel {
       doseQuantity: map['doseQuantity'] ?? 1,
       doseUnit: map['doseUnit'] ?? '',
       isControlled: map['isControlled'] ?? false,
-      requiresPrescription: map['requiresPrescription'] ?? false,
+      requiresPrescription:
+      map['requiresPrescription'] ?? false,
       requiresCaregiverSupervision:
-          map['requiresCaregiverSupervision'] ?? false,
+      map['requiresCaregiverSupervision'] ?? false,
       priority: map['priority'] ?? 'Media',
       treatmentReason: map['treatmentReason'] ?? '',
       doctorName: map['doctorName'] ?? '',
       frequency: map['frequency'] ?? '',
       instructions: map['instructions'] ?? '',
       times: List<String>.from(map['times'] ?? []),
+
       startDate: map['startDate'] != null
           ? DateTime.parse(map['startDate'])
           : DateTime.now(),
-      endDate: map['endDate'] != null ? DateTime.parse(map['endDate']) : null,
+
+      endDate: map['endDate'] != null
+          ? DateTime.parse(map['endDate'])
+          : null,
+
       observations: map['observations'] ?? '',
       active: map['active'] ?? true,
+
+      // Compatibilidad con registros anteriores
+      firstDoseTaken:
+      map['firstDoseTaken'] ?? false,
+
+      scheduleAnchorTime:
+      map['scheduleAnchorTime'] != null
+          ? DateTime.parse(
+        map['scheduleAnchorTime'],
+      )
+          : null,
+
       createdAt: map['createdAt'] != null
           ? DateTime.parse(map['createdAt'])
           : DateTime.now(),
+
       updatedAt: map['updatedAt'] != null
           ? DateTime.parse(map['updatedAt'])
           : DateTime.now(),

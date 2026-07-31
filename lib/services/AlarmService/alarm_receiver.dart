@@ -7,6 +7,7 @@ import '../../models/medication_log_model.dart';
 import '../../views/medications/medication_alarm_view.dart';
 import '../medication_log_service.dart';
 import '../navigation_service.dart';
+import '../notification_history_service.dart';
 import 'alarm_scheduler.dart';
 
 class AlarmReceiver {
@@ -15,13 +16,14 @@ class AlarmReceiver {
   static final AlarmReceiver instance = AlarmReceiver._();
 
   final MedicationLogService _logService = MedicationLogService();
+  final NotificationHistoryService _historyService =
+  NotificationHistoryService();
 
   bool _openingAlarm = false;
 
   AlarmPayload? decodePayload(String? encodedPayload) {
     if (encodedPayload == null || encodedPayload.trim().isEmpty) {
       debugPrint('AlarmReceiver: la notificación no contiene payload.');
-
       return null;
     }
 
@@ -30,7 +32,6 @@ class AlarmReceiver {
 
       if (decodedJson is! Map<String, dynamic>) {
         debugPrint('AlarmReceiver: el payload no tiene un formato válido.');
-
         return null;
       }
 
@@ -38,36 +39,32 @@ class AlarmReceiver {
 
       debugPrint(
         'AlarmReceiver: alarma recibida para '
-        '${alarmPayload.medicationName}.',
+            '${alarmPayload.medicationName}.',
       );
 
       return alarmPayload;
     } catch (error, stackTrace) {
       debugPrint('AlarmReceiver: error al leer el payload: $error');
-
       debugPrintStack(stackTrace: stackTrace);
-
       return null;
     }
   }
 
-  Future<void> handlePayload(String? encodedPayload) async {
+  Future<MedicationAlarmResult?> handlePayload(String? encodedPayload) async {
     if (_openingAlarm) {
       debugPrint('AlarmReceiver: ya se está abriendo una alarma.');
-
-      return;
+      return null;
     }
 
     final AlarmPayload? payload = decodePayload(encodedPayload);
 
     if (payload == null) {
-      return;
+      return null;
     }
 
     if (payload.medicationLogId.trim().isEmpty) {
       debugPrint('AlarmReceiver: medicationLogId está vacío.');
-
-      return;
+      return null;
     }
 
     _openingAlarm = true;
@@ -77,58 +74,72 @@ class AlarmReceiver {
 
       debugPrint('Buscando registro: ${payload.medicationLogId}');
 
-      final MedicationLogModel? medicationLog = await _logService.getLogById(
+      final MedicationLogModel? firestoreLog = await _logService.getLogById(
         logId: payload.medicationLogId,
       );
 
-      if (medicationLog == null) {
-        debugPrint(
-          'AlarmReceiver: no se encontró el registro '
-          'de la dosis en Firestore.',
-        );
-
-        return;
-      }
+      final MedicationLogModel medicationLog = firestoreLog ??
+          MedicationLogModel(
+            id: payload.medicationLogId,
+            patientUid: payload.patientUid,
+            medicationId: payload.medicationId,
+            medicationName: payload.medicationName,
+            scheduledTime: payload.scheduledTime,
+            scheduledDateTime: payload.scheduledDateTime,
+            confirmedAt: null,
+            status: 'pending',
+            snoozeCount: 0,
+            dose: payload.dose,
+            instructions: payload.instructions,
+            createdAt: payload.scheduledDateTime,
+            updatedAt: DateTime.now(),
+          );
 
       final NavigatorState? navigator = await _waitForNavigator();
 
       if (navigator == null) {
-        debugPrint(
-          'AlarmReceiver: el navegador todavía '
-          'no está disponible.',
-        );
-
-        return;
+        debugPrint('AlarmReceiver: el navegador todavía no está disponible.');
+        return null;
       }
 
       debugPrint('Abriendo MedicationAlarmView.');
 
-      debugPrint('1. Antes del push');
-
       final MedicationAlarmResult? result = await navigator
           .push<MedicationAlarmResult>(
-            MaterialPageRoute<MedicationAlarmResult>(
-              fullscreenDialog: true,
-              builder: (_) {
-                debugPrint('2. Entró al builder');
+        MaterialPageRoute<MedicationAlarmResult>(
+          fullscreenDialog: true,
+          builder: (_) {
+            return MedicationAlarmView(medicationLog: medicationLog);
+          },
+        ),
+      );
 
-                return MedicationAlarmView(medicationLog: medicationLog);
-              },
-            ),
-          );
+      debugPrint('MedicationAlarmView terminó con: $result');
 
-      debugPrint('3. Regresó del push con resultado: $result');
+      if (result != null) {
+        await _historyService.markAction(
+          patientUid: payload.patientUid,
+          notificationId: payload.notificationId,
+          action: switch (result) {
+            MedicationAlarmResult.taken => 'taken',
+            MedicationAlarmResult.snoozed => 'snoozed',
+            MedicationAlarmResult.skipped => 'skipped',
+          },
+        );
+      }
 
       if (result == MedicationAlarmResult.snoozed) {
         await _scheduleSnooze(payload: payload);
       }
+
+      return result;
     } catch (error, stackTrace) {
       debugPrint(
         'AlarmReceiver: error abriendo o '
-        'reprogramando la alarma: $error',
+            'reprogramando la alarma: $error',
       );
-
       debugPrintStack(stackTrace: stackTrace);
+      return null;
     } finally {
       _openingAlarm = false;
     }
@@ -156,7 +167,7 @@ class AlarmReceiver {
 
     debugPrint(
       'PROGRAMANDO SNOOZE PARA: '
-      '${snoozedPayload.scheduledDateTime}',
+          '${snoozedPayload.scheduledDateTime}',
     );
 
     await AlarmScheduler.instance.schedule(payload: snoozedPayload);
@@ -166,7 +177,6 @@ class AlarmReceiver {
 
   String _formatTime(DateTime dateTime) {
     final String hour = dateTime.hour.toString().padLeft(2, '0');
-
     final String minute = dateTime.minute.toString().padLeft(2, '0');
 
     return '$hour:$minute';

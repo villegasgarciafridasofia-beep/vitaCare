@@ -1,9 +1,10 @@
 import 'dart:async';
-
+import 'views/splas/splash_view.dart';
 import 'package:android_alarm_manager_plus/android_alarm_manager_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:proyectovita/views/splas/splash_view.dart';
 
 import 'firebase_options.dart';
 import 'routes/app_routes.dart';
@@ -76,14 +77,28 @@ class VitaCareApp extends StatefulWidget {
   State<VitaCareApp> createState() => _VitaCareAppState();
 }
 
-class _VitaCareAppState extends State<VitaCareApp> {
+class _VitaCareAppState extends State<VitaCareApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_handleInitialNotification());
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && !kIsWeb) {
+      unawaited(NotificationService.instance.recoverActiveMedicationAlarm());
+    }
   }
 
   Future<void> _handleInitialNotification() async {
@@ -92,9 +107,8 @@ class _VitaCareAppState extends State<VitaCareApp> {
        * Esperamos a que MaterialApp, AuthWrapper
        * y el Navigator terminen de construirse.
        */
-      await Future<void>.delayed(const Duration(seconds: 2));
-
       await NotificationService.instance.handleInitialNotification();
+      await NotificationService.instance.recoverActiveMedicationAlarm();
     } catch (error, stackTrace) {
       debugPrint('Error procesando la notificación inicial: $error');
 
@@ -156,7 +170,7 @@ class _VitaCareAppState extends State<VitaCareApp> {
         ),
       ),
 
-      home: AuthWrapper(),
+      home: SplashView(),
 
       routes: AppRoutes.routes,
     );
