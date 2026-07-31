@@ -98,7 +98,10 @@ class _AddMedicationViewState extends State<AddMedicationView> {
   bool isLoading = false;
   bool isLoadingUser = true;
   bool schedulesGeneratedAutomatically = false;
+  bool firstDoseTakenNow = false;
+  bool useRegistrationTime = true;
 
+  DateTime? scheduleAnchorTime;
   DateTime? startDate;
   DateTime? endDate;
 
@@ -140,6 +143,8 @@ class _AddMedicationViewState extends State<AddMedicationView> {
     endDate = medication.endDate;
 
     selectedTimes = List<String>.from(medication.times)..sort();
+    firstDoseTakenNow = medication.firstDoseTaken;
+    scheduleAnchorTime = medication.scheduleAnchorTime;
   }
 
   @override
@@ -348,6 +353,77 @@ class _AddMedicationViewState extends State<AddMedicationView> {
     });
   }
 
+
+  int? _intervalHoursForFrequency(String? frequency) {
+    switch (frequency) {
+      case 'Cada 6 horas':
+        return 6;
+      case 'Cada 8 horas':
+        return 8;
+      case 'Cada 12 horas':
+        return 12;
+      case 'Cada 24 horas':
+      case 'Una vez al día':
+        return 24;
+      default:
+        return null;
+    }
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final hour = dateTime.hour.toString().padLeft(2, '0');
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
+  }
+
+  void generateTimesFromRegistration() {
+    final intervalHours = _intervalHoursForFrequency(selectedFrequency);
+
+    if (intervalHours == null) {
+      showMessage(
+        'Esta frecuencia necesita horarios manuales o basados en tu rutina.',
+      );
+      return;
+    }
+
+    final now = DateTime.now();
+    scheduleAnchorTime = now;
+
+    DateTime firstDose = now;
+
+    if (firstDoseTakenNow) {
+      firstDose = now.add(Duration(hours: intervalHours));
+    }
+
+    final int dosesPerDay = intervalHours >= 24 ? 1 : 24 ~/ intervalHours;
+    final List<String> generatedTimes = [];
+
+    for (int index = 0; index < dosesPerDay; index++) {
+      final doseTime = firstDose.add(
+        Duration(hours: intervalHours * index),
+      );
+
+      final formattedTime = _formatTime(doseTime);
+
+      if (!generatedTimes.contains(formattedTime)) {
+        generatedTimes.add(formattedTime);
+      }
+    }
+
+    generatedTimes.sort();
+
+    setState(() {
+      selectedTimes = generatedTimes;
+      schedulesGeneratedAutomatically = true;
+      useRegistrationTime = true;
+      startDate ??= DateTime(
+        now.year,
+        now.month,
+        now.day,
+      );
+    });
+  }
+
   void generateSmartTimes(String? frequency) {
     if (frequency == null) {
       setState(() {
@@ -468,6 +544,8 @@ class _AddMedicationViewState extends State<AddMedicationView> {
 
       createdAt: originalMedication?.createdAt ?? now,
       updatedAt: now,
+      firstDoseTaken: firstDoseTakenNow,
+      scheduleAnchorTime: scheduleAnchorTime,
     );
 
     try {
@@ -516,35 +594,43 @@ class _AddMedicationViewState extends State<AddMedicationView> {
     required IconData icon,
     required List<Widget> children,
   }) {
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 18),
-      elevation: 1.5,
-      clipBehavior: Clip.antiAlias,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, color: Colors.teal),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.teal,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE1EAE5)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF285F50).withOpacity(0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: Colors.teal),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.teal,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ...children,
-          ],
-        ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ...children,
+        ],
       ),
     );
   }
@@ -577,12 +663,19 @@ class _AddMedicationViewState extends State<AddMedicationView> {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F8FB),
       appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF285F50),
+        surfaceTintColor: Colors.white,
         title: Text(
           widget.isEditing
               ? 'Editar medicamento'
-              : 'Agregar medicamento',
+              : 'Nuevo medicamento',
+          style: const TextStyle(
+            color: Color(0xFF24463E),
+            fontWeight: FontWeight.w700,
+          ),
         ),
-        backgroundColor: Colors.teal,
       ),
       body: Form(
         key: formKey,
@@ -591,6 +684,59 @@ class _AddMedicationViewState extends State<AddMedicationView> {
             padding: const EdgeInsets.all(16),
             child: ListView(
               children: [
+                Container(
+                  margin: const EdgeInsets.only(bottom: 18),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF3E806B), Color(0xFF285F50)],
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 58,
+                        height: 58,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.16),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: const Icon(
+                          Icons.medication_rounded,
+                          color: Colors.white,
+                          size: 32,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.isEditing
+                                  ? 'Actualiza el tratamiento'
+                                  : 'Registra tu tratamiento',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 19,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            const Text(
+                              'Completa los datos y define desde cuándo deben comenzar los recordatorios.',
+                              style: TextStyle(
+                                color: Color(0xFFE4F1EA),
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
                 sectionCard(
                   title: 'Información general',
                   icon: Icons.medication,
@@ -893,7 +1039,11 @@ class _AddMedicationViewState extends State<AddMedicationView> {
                           selectedFrequency = value;
                         });
 
-                        generateSmartTimes(value);
+                        if (useRegistrationTime) {
+                          generateTimesFromRegistration();
+                        } else {
+                          generateSmartTimes(value);
+                        }
                       },
                       validator: (value) {
                         if (value == null) {
@@ -935,9 +1085,100 @@ class _AddMedicationViewState extends State<AddMedicationView> {
                 ),
 
                 sectionCard(
-                  title: 'Horarios',
-                  icon: Icons.access_time,
+                  title: 'Inicio y horarios',
+                  icon: Icons.access_time_rounded,
                   children: [
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF2F8F4),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: const Color(0xFFD5E8DC),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '¿Ya tomaste la primera dosis?',
+                            style: TextStyle(
+                              color: Color(0xFF24463E),
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 7),
+                          const Text(
+                            'Esto permite calcular el siguiente horario a partir del momento del registro.',
+                            style: TextStyle(
+                              color: Color(0xFF64756E),
+                              height: 1.35,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ChoiceChip(
+                                  label: const Text('Sí, ya la tomé'),
+                                  selected: firstDoseTakenNow,
+                                  onSelected: (_) {
+                                    setState(() {
+                                      firstDoseTakenNow = true;
+                                    });
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: ChoiceChip(
+                                  label: const Text('No, será ahora'),
+                                  selected: !firstDoseTakenNow,
+                                  onSelected: (_) {
+                                    setState(() {
+                                      firstDoseTakenNow = false;
+                                    });
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: selectedFrequency == null
+                                  ? null
+                                  : generateTimesFromRegistration,
+                              icon: const Icon(Icons.schedule_send_rounded),
+                              label: const Text(
+                                'Calcular desde este momento',
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF285F50),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (scheduleAnchorTime != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 10),
+                              child: Text(
+                                'Horario calculado desde ${_formatTime(scheduleAnchorTime!)}.',
+                                style: const TextStyle(
+                                  color: Color(0xFF285F50),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     if (schedulesGeneratedAutomatically)
                       Container(
                         width: double.infinity,
@@ -1087,6 +1328,13 @@ class _AddMedicationViewState extends State<AddMedicationView> {
                   height: 56,
                   child: ElevatedButton.icon(
                     onPressed: isLoading ? null : saveMedication,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF285F50),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(17),
+                      ),
+                    ),
                     icon: isLoading
                         ? const SizedBox(
                       width: 21,

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import './recuperarcontraseña_view.dart';
@@ -85,16 +86,26 @@ class _LoginViewState extends State<LoginView> {
 
       if (!mounted) return;
 
-      Navigator.pushReplacementNamed(
+      Navigator.pushNamedAndRemoveUntil(
         context,
-        AppRoutes.completeProfile,
+        AppRoutes.auth,
+        (route) => false,
       );
+    } on FirebaseAuthException catch (error) {
+      if (!mounted) return;
+      final message = switch (error.code) {
+        'user-not-found' => 'No existe una cuenta con este correo.',
+        'wrong-password' || 'invalid-credential' =>
+          'El correo o la contraseña son incorrectos.',
+        'user-disabled' => 'Esta cuenta fue deshabilitada.',
+        'too-many-requests' =>
+          'Demasiados intentos. Espera unos minutos e inténtalo de nuevo.',
+        _ => 'No pudimos iniciar sesión. Revisa tus datos.',
+      };
+      _showErrorMessage(message);
     } catch (e) {
       if (!mounted) return;
-
-      _showErrorMessage(
-        'No pudimos iniciar sesión. Revisa tu correo y contraseña.',
-      );
+      _showErrorMessage('No pudimos iniciar sesión. Inténtalo nuevamente.');
     } finally {
       if (mounted) {
         setState(() {
@@ -114,9 +125,10 @@ class _LoginViewState extends State<LoginView> {
 
       if (!mounted) return;
 
-      Navigator.pushReplacementNamed(
+      Navigator.pushNamedAndRemoveUntil(
         context,
-        AppRoutes.completeProfile,
+        AppRoutes.auth,
+        (route) => false,
       );
     } catch (e) {
       if (!mounted) return;

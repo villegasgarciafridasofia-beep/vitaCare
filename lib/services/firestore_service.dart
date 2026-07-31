@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import '../models/routine_model.dart';
+import 'routine_service.dart';
+import '../models/routine_model.dart';
 import '../models/user_model.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
-
+  final RoutineService _routineService = RoutineService();
   Future<void> saveUser(UserModel user) async {
     await _db
         .collection('users')
@@ -32,21 +34,44 @@ class FirestoreService {
     required bool allowNightReminders,
     required int reminderMinutesBefore,
   }) async {
-    await _db.collection('users').doc(uid).set({
-      'wakeUpTime': wakeUpTime,
-      'breakfastTime': breakfastTime,
-      'lunchTime': lunchTime,
-      'dinnerTime': dinnerTime,
-      'sleepTime': sleepTime,
-      'allowNightReminders': allowNightReminders,
-      'reminderMinutesBefore': reminderMinutesBefore,
-      'isRoutineConfigured': true,
-    }, SetOptions(merge: true));
+    final DateTime now = DateTime.now();
+
+    await _db.collection('users').doc(uid).set(
+      {
+        'wakeUpTime': wakeUpTime,
+        'breakfastTime': breakfastTime,
+        'lunchTime': lunchTime,
+        'dinnerTime': dinnerTime,
+        'sleepTime': sleepTime,
+        'allowNightReminders': allowNightReminders,
+        'reminderMinutesBefore': reminderMinutesBefore,
+        'isRoutineConfigured': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+
+    final RoutineModel routine = RoutineModel(
+      uid: uid,
+      wakeUpTime: wakeUpTime,
+      breakfastTime: breakfastTime,
+      lunchTime: lunchTime,
+      dinnerTime: dinnerTime,
+      sleepTime: sleepTime,
+      allowNightReminders: allowNightReminders,
+      reminderMinutesBefore: reminderMinutesBefore,
+      isConfigured: true,
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    await _routineService.saveRoutine(routine);
   }
 
   Future<void> markProfileAsComplete(String uid) async {
     await _db.collection('users').doc(uid).set({
       'isProfileComplete': true,
+      'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
 
@@ -80,7 +105,6 @@ class FirestoreService {
 
   Future<bool> userExists(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
-
     return doc.exists;
   }
 }

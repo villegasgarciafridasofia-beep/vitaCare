@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class UserModel {
   final String uid;
   final String email;
@@ -13,12 +15,12 @@ class UserModel {
   final bool hasDisease;
   final List<String> diseases;
 
-  final String role; // patient, caregiver o both
+  final String role;
 
   final bool isProfileComplete;
   final bool isOlderAdult;
 
-  final String authProvider; // email o google
+  final String authProvider;
   final String profileImage;
   final bool isActive;
 
@@ -29,7 +31,6 @@ class UserModel {
 
   final DateTime createdAt;
 
-  // Configuración de rutina
   final String wakeUpTime;
   final String breakfastTime;
   final String lunchTime;
@@ -61,8 +62,6 @@ class UserModel {
     required this.caregivers,
     required this.patients,
     required this.createdAt,
-
-    // Valores por defecto
     this.wakeUpTime = '',
     this.breakfastTime = '',
     this.lunchTime = '',
@@ -80,7 +79,7 @@ class UserModel {
       'name': name,
       'paternalLastName': paternalLastName,
       'maternalLastName': maternalLastName,
-      'birthDate': birthDate.toIso8601String(),
+      'birthDate': Timestamp.fromDate(birthDate),
       'phoneNumber': phoneNumber,
       'emergencyContact': emergencyContact,
       'hasDisease': hasDisease,
@@ -94,9 +93,7 @@ class UserModel {
       'linkCode': linkCode,
       'caregivers': caregivers,
       'patients': patients,
-      'createdAt': createdAt.toIso8601String(),
-
-      // Rutina
+      'createdAt': Timestamp.fromDate(createdAt),
       'wakeUpTime': wakeUpTime,
       'breakfastTime': breakfastTime,
       'lunchTime': lunchTime,
@@ -110,40 +107,71 @@ class UserModel {
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
-      uid: map['uid'] ?? '',
-      email: map['email'] ?? '',
-      name: map['name'] ?? '',
-      paternalLastName: map['paternalLastName'] ?? '',
-      maternalLastName: map['maternalLastName'] ?? '',
-      birthDate: map['birthDate'] != null
-          ? DateTime.parse(map['birthDate'])
-          : DateTime.now(),
-      phoneNumber: map['phoneNumber'] ?? '',
-      emergencyContact: map['emergencyContact'] ?? '',
+      uid: map['uid']?.toString() ?? '',
+      email: map['email']?.toString() ?? '',
+      name: map['name']?.toString() ?? '',
+      paternalLastName:
+      map['paternalLastName']?.toString() ?? '',
+      maternalLastName:
+      map['maternalLastName']?.toString() ?? '',
+      birthDate: _dateFromValue(map['birthDate']),
+      phoneNumber: map['phoneNumber']?.toString() ?? '',
+      emergencyContact:
+      map['emergencyContact']?.toString() ?? '',
       hasDisease: map['hasDisease'] ?? false,
-      diseases: List<String>.from(map['diseases'] ?? []),
-      role: map['role'] ?? 'patient',
-      isProfileComplete: map['isProfileComplete'] ?? false,
+      diseases: List<String>.from(
+        map['diseases'] ?? <String>[],
+      ),
+      role: map['role']?.toString() ?? 'patient',
+      isProfileComplete:
+      map['isProfileComplete'] ?? false,
       isOlderAdult: map['isOlderAdult'] ?? false,
-      authProvider: map['authProvider'] ?? 'email',
-      profileImage: map['profileImage'] ?? '',
+      authProvider:
+      map['authProvider']?.toString() ?? 'email',
+      profileImage:
+      map['profileImage']?.toString() ?? '',
       isActive: map['isActive'] ?? true,
-      linkCode: map['linkCode'],
-      caregivers: List<String>.from(map['caregivers'] ?? []),
-      patients: List<String>.from(map['patients'] ?? []),
-      createdAt: map['createdAt'] != null
-          ? DateTime.parse(map['createdAt'])
-          : DateTime.now(),
-
-      // Rutina
-      wakeUpTime: map['wakeUpTime'] ?? '',
-      breakfastTime: map['breakfastTime'] ?? '',
-      lunchTime: map['lunchTime'] ?? '',
-      dinnerTime: map['dinnerTime'] ?? '',
-      sleepTime: map['sleepTime'] ?? '',
-      allowNightReminders: map['allowNightReminders'] ?? false,
-      reminderMinutesBefore: map['reminderMinutesBefore'] ?? 10,
-      isRoutineConfigured: map['isRoutineConfigured'] ?? false,
+      linkCode: map['linkCode']?.toString(),
+      caregivers: List<String>.from(
+        map['caregivers'] ?? <String>[],
+      ),
+      patients: List<String>.from(
+        map['patients'] ?? <String>[],
+      ),
+      createdAt: _dateFromValue(map['createdAt']),
+      wakeUpTime:
+      map['wakeUpTime']?.toString() ?? '',
+      breakfastTime:
+      map['breakfastTime']?.toString() ?? '',
+      lunchTime:
+      map['lunchTime']?.toString() ?? '',
+      dinnerTime:
+      map['dinnerTime']?.toString() ?? '',
+      sleepTime:
+      map['sleepTime']?.toString() ?? '',
+      allowNightReminders:
+      map['allowNightReminders'] ?? false,
+      reminderMinutesBefore:
+      map['reminderMinutesBefore'] ?? 10,
+      isRoutineConfigured:
+      map['isRoutineConfigured'] ?? false,
     );
+  }
+
+  static DateTime _dateFromValue(dynamic value) {
+    if (value is Timestamp) {
+      return value.toDate();
+    }
+
+    if (value is DateTime) {
+      return value;
+    }
+
+    if (value is String) {
+      return DateTime.tryParse(value) ??
+          DateTime.now();
+    }
+
+    return DateTime.now();
   }
 }
