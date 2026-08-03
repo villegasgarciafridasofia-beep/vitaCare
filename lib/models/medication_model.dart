@@ -26,7 +26,16 @@ class MedicationModel {
 
   final DateTime createdAt;
   final DateTime updatedAt;
+// Información generada por IA
 
+  final String sourceAI;
+// manual | voice | image
+  final double aiConfidence;
+  final String? imageUrl;
+  final String? laboratory;
+  final String? registrationNumber;
+  final String? aiRawText;
+  final String? aiProvider;
   MedicationModel({
     required this.id,
     required this.patientUid,
@@ -55,6 +64,19 @@ class MedicationModel {
 
     required this.createdAt,
     required this.updatedAt,
+    this.sourceAI = 'manual',
+
+    this.aiConfidence = 0,
+
+    this.imageUrl,
+
+    this.laboratory,
+
+    this.registrationNumber,
+
+    this.aiRawText,
+
+    this.aiProvider,
   });
 
   Map<String, dynamic> toMap() {
@@ -88,6 +110,25 @@ class MedicationModel {
 
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'sourceAI':
+      sourceAI,
+
+      'aiConfidence':
+      aiConfidence,
+
+      'imageUrl':
+      imageUrl,
+
+      'laboratory':
+      laboratory,
+
+      'registrationNumber':
+      registrationNumber,
+      'aiRawText':
+      aiRawText,
+
+      'aiProvider':
+      aiProvider,
     };
   }
 
@@ -100,7 +141,10 @@ class MedicationModel {
       name: map['name'] ?? '',
       category: map['category'] ?? '',
       medicineForm: map['medicineForm'] ?? '',
-      doseQuantity: map['doseQuantity'] ?? 1,
+      doseQuantity:
+      map['doseQuantity'] != null
+          ? (map['doseQuantity'] as num).toInt()
+          : 1,
       doseUnit: map['doseUnit'] ?? '',
       isControlled: map['isControlled'] ?? false,
       requiresPrescription:
@@ -112,7 +156,10 @@ class MedicationModel {
       doctorName: map['doctorName'] ?? '',
       frequency: map['frequency'] ?? '',
       instructions: map['instructions'] ?? '',
-      times: List<String>.from(map['times'] ?? []),
+      times:
+      map['times'] != null
+          ? List<String>.from(map['times'])
+          : [],
 
       startDate: map['startDate'] != null
           ? DateTime.parse(map['startDate'])
@@ -143,6 +190,125 @@ class MedicationModel {
       updatedAt: map['updatedAt'] != null
           ? DateTime.parse(map['updatedAt'])
           : DateTime.now(),
+      aiRawText:
+      map['aiRawText'],
+
+      aiProvider:
+      map['aiProvider'],
     );
+  }
+  MedicationModel copyWith({
+
+    String? name,
+    String? medicineForm,
+    int? doseQuantity,
+    String? doseUnit,
+    String? frequency,
+    String? instructions,
+
+    String? sourceAI,
+    double? aiConfidence,
+    String? aiRawText,
+    String? aiProvider,
+
+    String? imageUrl,
+    String? laboratory,
+    String? registrationNumber,
+
+  }){
+
+    return MedicationModel(
+
+      id:id,
+      patientUid:patientUid,
+
+      name:name ?? this.name,
+
+      category:category,
+
+      medicineForm:
+      medicineForm ?? this.medicineForm,
+
+      doseQuantity:
+      doseQuantity ?? this.doseQuantity,
+
+      doseUnit:
+      doseUnit ?? this.doseUnit,
+
+      isControlled:
+      isControlled,
+
+      requiresPrescription:
+      requiresPrescription,
+
+      requiresCaregiverSupervision:
+      requiresCaregiverSupervision,
+
+      priority:
+      priority,
+
+      treatmentReason:
+      treatmentReason,
+
+      doctorName:
+      doctorName,
+
+      frequency:
+      frequency ?? this.frequency,
+
+      instructions:
+      instructions ?? this.instructions,
+
+      times:
+      times,
+
+      startDate:
+      startDate,
+
+      endDate:
+      endDate,
+
+      observations:
+      observations,
+
+      active:
+      active,
+
+      firstDoseTaken:
+      firstDoseTaken,
+
+      scheduleAnchorTime:
+      scheduleAnchorTime,
+
+      createdAt:
+      createdAt,
+
+      updatedAt:
+      DateTime.now(),
+
+      sourceAI:
+      sourceAI ?? this.sourceAI,
+
+      aiConfidence:
+      aiConfidence ?? this.aiConfidence,
+
+      imageUrl:
+      imageUrl ?? this.imageUrl,
+
+      laboratory:
+      laboratory ?? this.laboratory,
+
+      registrationNumber:
+      registrationNumber ?? this.registrationNumber,
+
+      aiRawText:
+      aiRawText ?? this.aiRawText,
+
+      aiProvider:
+      aiProvider ?? this.aiProvider,
+
+
+    );
+
   }
 }
