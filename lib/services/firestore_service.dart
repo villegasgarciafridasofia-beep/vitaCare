@@ -1,12 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/routine_model.dart';
-import 'routine_service.dart';
-import '../models/routine_model.dart';
+
 import '../models/user_model.dart';
+import '../models/routine_model.dart';
+import '../models/medication_model.dart';
+import 'routine_service.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final RoutineService _routineService = RoutineService();
+
+  // =====================================================
+  // USUARIOS
+  // =====================================================
+
   Future<void> saveUser(UserModel user) async {
     await _db
         .collection('users')
@@ -69,10 +75,13 @@ class FirestoreService {
   }
 
   Future<void> markProfileAsComplete(String uid) async {
-    await _db.collection('users').doc(uid).set({
-      'isProfileComplete': true,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    await _db.collection('users').doc(uid).set(
+      {
+        'isProfileComplete': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
   }
 
   Future<List<UserModel>> getPatients(List<String> patientIds) async {
@@ -106,5 +115,43 @@ class FirestoreService {
   Future<bool> userExists(String uid) async {
     final doc = await _db.collection('users').doc(uid).get();
     return doc.exists;
+  }
+
+  // =====================================================
+  // MEDICAMENTOS
+  // =====================================================
+
+  Future<void> saveMedication(MedicationModel medication) async {
+    await _db
+        .collection('medications')
+        .doc(medication.id)
+        .set(medication.toMap());
+  }
+
+  Stream<List<MedicationModel>> getPatientMedications(String patientUid) {
+    return _db
+        .collection('medications')
+        .where('patientUid', isEqualTo: patientUid)
+        .where('active', isEqualTo: true)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+          .map((doc) => MedicationModel.fromMap(doc.data()))
+          .toList(),
+    );
+  }
+
+  Future<void> updateMedication(MedicationModel medication) async {
+    await _db
+        .collection('medications')
+        .doc(medication.id)
+        .update(medication.toMap());
+  }
+
+  Future<void> deactivateMedication(String medicationId) async {
+    await _db.collection('medications').doc(medicationId).update({
+      'active': false,
+      'updatedAt': DateTime.now().toIso8601String(),
+    });
   }
 }

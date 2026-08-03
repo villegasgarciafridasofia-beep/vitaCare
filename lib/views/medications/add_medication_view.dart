@@ -6,6 +6,8 @@ import '../../models/user_model.dart';
 import '../../services/firestore_service.dart';
 import '../../services/medication_service.dart';
 import '../../services/smart_schedule_service.dart';
+import 'package:provider/provider.dart';
+
 
 class AddMedicationView extends StatefulWidget {
   final MedicationModel? medication;
